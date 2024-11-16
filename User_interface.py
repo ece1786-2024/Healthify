@@ -133,17 +133,14 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
      
       
 def show_diet_plan():
-    print(diet_plan)
     table_data = prepare_table_data(diet_plan=diet_plan)
     show_plan(table_data, "Diet Plan")
     
 def show_fitness_plan():
-    print(fitness_plan)
     table_data = prepare_table_data(fitness_plan=fitness_plan)
     show_plan(table_data, "Fitness Plan")
     
 def show_timetable():
-    print(combined_plan)
     table_data = prepare_table_data(diet_plan=diet_plan, fitness_plan=fitness_plan, combined_timetable=combined_plan)
     show_plan(table_data, "Combined Timetable")
     
