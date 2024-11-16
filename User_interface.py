@@ -26,6 +26,7 @@ def show_profile():
     profile = extract_user_profile("Example user input text for AI")  # Replace with user input
     profile_window = tk.Toplevel(root)
     profile_window.title("Profile")
+    profile_window.geometry("400x400")
     tk.Label(profile_window, text="Your Profile", font=("Helvetica", 16)).pack(pady=10)
     profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
     profile_display.insert(tk.END, profile)
@@ -51,44 +52,51 @@ def show_progress():
 
 # Main window setup
 root = tk.Tk()
-root.title("AI Chat Interface")
-root.geometry("600x500")
+root.title("Healthify")
+root.geometry("800x600")
+root.configure(bg="#f3f4e9")
 
 # Slide menu
-slide_menu = tk.Frame(root, width=200, bg="lightgray", height=500)
-slide_menu.grid(row=0, column=0, sticky="ns")
+slide_menu = tk.Frame(root, width=200, bg="#556b2f", height=500)
+slide_menu.grid(row=0, column=0, rowspan=3, sticky="ns")
 slide_menu.grid_remove()  # Initially hidden
 
-tk.Button(slide_menu, text="Diet Plan", command=show_diet_plan).pack(pady=10)
-tk.Button(slide_menu, text="Fitness Plan", command=show_fitness_plan).pack(pady=10)
-tk.Button(slide_menu, text="My Progress", command=show_progress).pack(pady=10)
+menu_button_style = {"font": ("Helvetica", 12), "bg": "#6b8e23", "fg": "white", "relief": "flat"}
+tk.Button(slide_menu, text="Diet Plan", **menu_button_style, command=show_diet_plan).pack(pady=10, padx=10, fill="x")
+tk.Button(slide_menu, text="Fitness Plan", **menu_button_style, command=show_fitness_plan).pack(pady=10, padx=10, fill="x")
+tk.Button(slide_menu, text="My Progress", **menu_button_style, command=show_progress).pack(pady=10, padx=10, fill="x")
 
 # Header and toggle button
-header = tk.Frame(root, bg="white", height=50)
+header = tk.Frame(root, bg="#f3f4e9")
 header.grid(row=0, column=1, sticky="ew")
 
-menu_button = tk.Button(header, text="☰", command=toggle_menu, bg="white", borderwidth=0)
+menu_button = tk.Button(header, text="☰", font=("Helvetica", 10), bg="#f3f4e9", relief="flat", command=toggle_menu)
 menu_button.pack(side="left", padx=10)
 
-profile_button = tk.Button(root, text="Profile", command=show_profile)
-profile_button.grid(row=2, column=0, pady=20, sticky="sw")
-
-# Chat area
-chat_frame = tk.Frame(root, bg="white", height=450)
+# Main chat frame
+chat_frame = tk.Frame(root, bg="#f3f4e9", padx=20, pady=20)
 chat_frame.grid(row=1, column=1, sticky="nsew")
 
-tk.Label(chat_frame, text="Hello! How can I help today?", font=("Helvetica", 14), bg="white").pack(pady=10)
+# welcome message
+welcome_label = tk.Label(chat_frame, text="Hello! Welcome to Healthify!\nHow can I help you today?", font=("Helvetica", 16), bg="#f3f4e9", fg="#556b2f")
+welcome_label.pack(pady=10)
 
-chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=50, state="disabled", bg="lightgray")
+# chat display
+chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="disabled", bg="#f7f7f7", fg="black")
 chat_display.pack(pady=10)
 
-# Input box
-chat_input = tk.Text(chat_frame, height=3, width=50, bg="white")
+# Input bot for chat
+chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black")
 chat_input.pack(pady=10)
 
-# Send button
-send_button = tk.Button(chat_frame, text="Send", command=handle_chat)
-send_button.pack()
+# sent button
+send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#556b2f", fg="white", command=handle_chat)
+send_button.pack(pady=10)
+
+# profile button
+profile_button = tk.Button(root, text="My Profile", font=("Helvetica", 12), bg="#556b2f", fg="white", command=show_profile)
+profile_button.grid(row=2, column=0, pady=10, sticky="sw")
+
 
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(1, weight=1)
