@@ -1,11 +1,11 @@
 import os
-import openai
+from openai import OpenAI
 import json
 
-"""client = OpenAI(
+client = OpenAI(
     api_key = os.getenv('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'),
-)"""
-openai.api_key ='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'
+)
+
 def extract_user_profile(user_input):
     prompt = f"""
 Translate the user input into English and Extract the following information from the user's input:
@@ -16,7 +16,7 @@ Translate the user input into English and Extract the following information from
 - Fitness Goals
 - Current Physical Activity Level
 - Health Constraints
-- Dietary Restrictions  
+- Dietary Restrictions
 
 User Input:
 \"\"\"
@@ -25,7 +25,7 @@ User Input:
 
 Only Provide the extracted information in JSON format with keys: Name, age, weight, gender, fitness_goals, physical_activity_level, Health_constraints, Dietary_restrictions. The output should remove Markdown code
 """
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model = "gpt-4o",
         max_tokens = 300,
         temperature = 0,
