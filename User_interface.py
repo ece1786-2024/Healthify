@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import User_profile
-from Recommendation_syn import simulate_diet, simulate_fitness, generate_diet_plan, generate_fitness_plan, combine_plan, to_dataframe
+from Recommendation_syn import diet_data, fitness_data, generate_diet_plan, generate_fitness_plan, combine_plan, to_dataframe
 import json
 import pandas as pd
 from openai import OpenAI
@@ -13,16 +13,16 @@ client = OpenAI(
     api_key = os.getenv('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'),
 )
 
-diet_list = simulate_diet()
-fitness_list = simulate_fitness()
-diet_plan = generate_diet_plan(diet_list)
-fitness_plan = generate_fitness_plan(fitness_list)
+diet_plan = generate_diet_plan(diet_data)
+fitness_plan = generate_fitness_plan(fitness_data)
 combined_plan = combine_plan(diet_plan, fitness_plan)
-
-# Convert plans to DataFrames
 df_diet = to_dataframe(diet_plan, plan_type="Diet")
 df_fitness = to_dataframe(fitness_plan, plan_type="Fitness")
 df_combined = to_dataframe(combined_plan)
+
+print("diet plan")
+print(diet_plan)
+
 
 messages = [
         {"role": "system", 
@@ -175,7 +175,7 @@ def show_plan(table_data, title):
         label.grid(row=0, column=i, sticky="nsew")
     
     for row_i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
-        label = tk.Label(frame, text=time_of_day, font=("Helvetica", 12), width=10, anchor="w")
+        label = tk.Label(frame, text=time_of_day, font=("Helvetica", 12), width=10, anchor="w", bg="#556b2f")
         label.grid(row=row_i+1, column=0, sticky="w")
         
         for col_i, day in enumerate(table_data.keys()):
@@ -193,8 +193,44 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
     table = {day: {"Morning": "", "Noon": "", "Evening": ""} for day in days}
     
     for day in days:
+        if combined_timetable:
+            if "Diet" in combined_timetable[day]:
+                morning_diet = combined_timetable[day]["Diet"].get("Morning", [])
+                noon_diet = combined_timetable[day]["Diet"].get("Noon", [])
+                evening_diet = combined_timetable[day]["Diet"].get("Evening", [])
+                table[day]["Morning"] += f"Foods: {','.join(morning_diet)}\n"
+                table[day]["Noon"] += f"Foods: {','.join(noon_diet)}\n"
+                table[day]["Evening"] += f"Foods: {','.join(evening_diet)}\n"
+                
+            if "Fitness" in combined_timetable[day]:
+                morning_exercises = combined_timetable[day]["Fitness"].get("Morning", "")
+                evening_exercises = combined_timetable[day]["Fitness"].get("Evening", "")
+                table[day]["Morning"] += f"Exercises: {morning_exercises}\n"
+                table[day]["Evening"] += f"Exercises: {evening_exercises}\n"
         
-        table[day]["Morning"] = ""
+        elif diet_plan or fitness_plan:
+            if diet_plan:
+                meals = diet_plan.get(day, {})
+                morning_diet = meals.get("Morning", [])
+                noon_diet = meals.get("Noon", [])
+                evening_diet = meals.get("Evening", [])
+                table[day]["Morning"] += f"Foods: {','.join(morning_diet)}\n"
+                table[day]["Noon"] += f"Foods: {','.join(noon_diet)}\n"
+                table[day]["Evening"] += f"Foods: {','.join(evening_diet)}\n"
+                
+            if fitness_plan:
+                exercises = fitness_plan.get(day, {})
+                morning_exercises = exercises.get("Morning", "")
+                evening_exercises = exercises.get("Evening", "")
+                table[day]["Morning"] += f"Exercises: {','.join(morning_exercises)}\n"
+                table[day]["Evening"] += f"Exercises: {','.join(evening_exercises)}\n"
+                
+        
+        
+        
+        
+        
+        """table[day]["Morning"] = ""
         table[day]["Noon"] = ""
         table[day]["Evening"] = ""
         
@@ -228,6 +264,7 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
             exercises = fitness_plan.get(day, "No exercises")
             table[day]["Morning"] += f"Exercises:\n{exercises}\n"
             table[day]["Evening"] += f"Exercises:\n{exercises}\n"
+            """
 
 
                 
