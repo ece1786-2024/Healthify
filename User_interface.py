@@ -1,12 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from User_profile import extract_user_profile 
+import User_profile
 from Recommendation_syn import simulate_diet, simulate_fitness, generate_diet_plan, generate_fitness_plan, combine_plan, to_dataframe
 import json
 import pandas as pd
+from openai import OpenAI
+import os
 
 
+client = OpenAI(
+    api_key = os.getenv('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'),
+)
 
 diet_list = simulate_diet()
 fitness_list = simulate_fitness()
@@ -19,32 +24,134 @@ df_diet = to_dataframe(diet_plan, plan_type="Diet")
 df_fitness = to_dataframe(fitness_plan, plan_type="Fitness")
 df_combined = to_dataframe(combined_plan)
 
+messages = [
+        {"role": "system", 
+         "content":
+            "You are a friendly fitness assistant, responsible for having a natural conversation with the user,"
+            "Gradually collect the following information: name, age, gender, weight, fitness goals,"
+            "Current physical activity levels, health restrictions, and dietary preferences."
+            "Ask one question at a time and respond appropriately based on the user's answers."
+        }
+]
+
+user_profile = {}
+
+info_keys = {
+        "name": "name",
+        "age": "age",
+        "gender": "gender",
+        "weight": "weight",
+        "fitness goal": "fitness goal",
+        "current physical activity levels": "current physical activity levels",
+        "health restrictions": "health restrictions",
+        "dietary preferences": "dietary preferences"  
+    }
+
+collected_keys = set()
+
+
+def start_chat():
+    response = client.chat.completions.create(
+        model = "gpt-3.5-turbo",
+        messages = messages,
+        max_tokens = 150,
+        temperature = 0.7,
+    )
+
+    assistant_message = response.choices[0].message.content.strip()
+    messages.append({"role": "assistant", "content": assistant_message})
+    chat_display.config(state="normal")
+    chat_display.insert(tk.END, f"Assistant: {assistant_message}\n")
+    chat_display.see(tk.END)
+    chat_display.config(state="disabled")
 
 def handle_chat():
-    user_input = chat_input.get("1.0", "end-1c")
-    if not user_input.strip():
-        messagebox.showerror("Error", "Please enter some text!")
+    user_input = chat_input.get("1.0", tk.END).strip()
+    if not user_input:
         return
-    try:
-        # Simulate AI response for now
-        ai_response = "This is a sample AI response. You can integrate your AI logic here."
-        chat_display.config(state="normal")
-        chat_display.insert(tk.END, f"You: {user_input}\nAI: {ai_response}\n\n")
-        chat_display.config(state="disabled")
-        chat_input.delete("1.0", tk.END)
-    except Exception as e:
-        messagebox.showerror("Error", f"Failed to process input: {e}")
+    chat_input.delete("1.0", tk.END)
+    messages.append({"role": "user", "content": user_input})
+    
+    chat_display.config(state="normal")
+    chat_display.insert(tk.END, f"You: {user_input}\n")
+    chat_display.see(tk.END)
+    chat_display.config(state="disabled")
+    
+    extraction_prompt = (
+        "As an AI assistant, extract any personal information provided from the user's response below. "
+        "Include the following keys exactly as specified: "
+        "'name', 'age', 'gender', 'weight', 'fitness goal', "
+        "'current physical activity levels', 'health restrictions', 'dietary preferences'. "
+        "Please output the new information in JSON format, without explanation or additional text. "
+        "If a piece of information is not provided, do not include it in the JSON."
+        "\n\nUser's reply:\n"
+        f"\"\"\"\n{user_input}\n\"\"\""
+    )
+    
+    extraction_response = client.chat.completions.create(
+            model = "gpt-4o",
+            messages=[
+                {"role": "system", "content": extraction_prompt}
+            ],
+            max_tokens= 150,
+            temperature= 0,
+        )
+    
+    extraction_result = extraction_response.choices[0].message.content.strip()
+    
+    extraction_result_cleaned = extraction_result
+    if extraction_result.startswith("```") and extraction_result.endswith("```"):
+        extraction_result_cleaned = extraction_result.strip("`")
+        # Remove the language specifier if present
+        extraction_result_cleaned = extraction_result_cleaned.replace("json\n", "").replace("json\n", "")
+        extraction_result_cleaned = extraction_result_cleaned.strip()
         
+    
+    # Try to parse the JSON and update user_profile
+    try:
+        new_info = json.loads(extraction_result_cleaned)
+        for key, value in new_info.items():
+            key_lower = key.lower()
+            if key_lower in info_keys:
+                user_profile[info_keys[key_lower]] = value
+                collected_keys.add(info_keys[key_lower])
+    except json.JSONDecodeError as e:
+        print("JSON decoding failed:", e)
+        print("Extraction Result was:", extraction_result)
+        pass  # Proceed to the next iteration
+    
+    if len(collected_keys) == len(info_keys):
+        chat_display.config(state="normal")
+        chat_display.insert(tk.END, "Assistant: All information collected.\n")
+        chat_display.see(tk.END)
+        chat_display.config(state="disabled")
+        
+        #proceed to generate diet and fitness plan
+        return
+    
+    response = client.chat.completions.create(
+        model = "gpt-3.5-turbo",
+        messages = messages,
+        max_tokens = 150,
+        temperature = 0.7,
+    )
+    
+    assitant_message = response.choices[0].message.content.strip()
+    messages.append({"role": "assistant", "content": assitant_message})
+    chat_display.config(state="normal")
+    chat_display.insert(tk.END, f"Assistant: {assitant_message}\n")
+    chat_display.see(tk.END)
+    chat_display.config(state="disabled")
+
         
 def show_profile():
     # Simulate profile generation
-    profile = extract_user_profile("Example user input text for AI")  # Replace with user input
     profile_window = tk.Toplevel(root)
     profile_window.title("Profile")
     profile_window.geometry("400x400")
     tk.Label(profile_window, text="Your Profile", font=("Helvetica", 16)).pack(pady=10)
     profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
-    profile_display.insert(tk.END, profile)
+    profile_display.insert(tk.END, json.dumps(user_profile, indent=2))
     profile_display.config(state="disabled")
     profile_display.pack(pady=10)
     
@@ -182,7 +289,7 @@ chat_frame = tk.Frame(root, bg="#f3f4e9", padx=20, pady=20)
 chat_frame.grid(row=1, column=1, sticky="nsew")
 
 # welcome message
-welcome_label = tk.Label(chat_frame, text="Hello! Welcome to Healthify!\nHow can I help you today?", font=("Helvetica", 16), bg="#f3f4e9", fg="#556b2f")
+welcome_label = tk.Label(chat_frame, text="Welcome to Healthify!", font=("Helvetica", 20), bg="#f3f4e9", fg="#556b2f")
 welcome_label.pack(pady=10)
 
 # chat display
@@ -204,6 +311,10 @@ profile_button.grid(row=2, column=0, pady=10, sticky="sw")
 
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(1, weight=1)
+
+
+# Start the chat
+start_chat()
 
 # Run the application
 root.mainloop()
