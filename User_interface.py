@@ -364,7 +364,7 @@ tk.Button(slide_menu, text="My Timetable", **menu_button_style, command=show_tim
 header = tk.Frame(root, bg="#e6f7d1")
 header.grid(row=0, column=1, sticky="ew")
 
-menu_button = tk.Button(header, text="☰", font=("Helvetica", 10), bg="#e6f7d1", relief="flat", command=toggle_menu)
+menu_button = tk.Button(header, text="☰", font=("Helvetica", 15), bg="#e6f7d1", relief="flat", command=toggle_menu)
 menu_button.pack(side="left", padx=10)
 
 # Main chat frame
