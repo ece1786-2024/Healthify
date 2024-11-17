@@ -11,6 +11,7 @@ df = pd.read_csv(file_path)
 # Example user input
 user_input = {'Name': 'Jack', 'Height': 180, 'Age': 20, 'Weight': '80Kg', 'Gender': 'Male', 'Fitness_goals': 'Muscle Gain', 'Dietary_preference': 'Heart Health' , 'Heavy_Eater': 'Normal' , 'Physical_activity_level': 'Beginner with no experience, can exercise two days a week', 'Health_constraints': 'None mentioned', 'Dietary_restrictions': 'Prefers meat over vegetables, dislikes intense exercise'}
 
+# Detect the dietary purpose based on the fitness goals
 def dietary_purpose(Fitness_goals):
         if Fitness_goals == 'Muscle Gain':
             return 'Muscle Gain'
@@ -19,6 +20,7 @@ def dietary_purpose(Fitness_goals):
         else:
             return 'Weight Loss'
 
+# Detect the dietary preference based on the dietary preference
 def dietary_preference(Dietary_preference):
     if Dietary_preference == 'Heart Health':
         return 'Heart Health'
@@ -29,9 +31,11 @@ def dietary_preference(Dietary_preference):
     else:
         return 'General'
     
+# Set those parameters based on the user input
 user_preference = dietary_preference(user_input['Dietary_preference'])
 user_purpose = dietary_purpose(user_input['Fitness_goals'])
 
+# Filter the candidate foods based on the user's dietary preference and fitness goals
 candidate_foods = df[df['Muscle Gain'] == int(user_purpose == 'Muscle Gain')]
 
 if user_preference == 'Heart Health':
@@ -43,9 +47,10 @@ elif user_preference == 'High Energy':
 
 
 food_list = candidate_foods[['name', 'calories', 'total_fat', 'protein', 'carbohydrate']].to_dict('records')
+# Limit the number of foods to 100
+food_list = food_list[:100]
 
-food_list = food_list[:20]
-
+# Convert the food list to a text format
 food_text = ""
 for food in food_list:
     name = food.get('name')
@@ -88,7 +93,7 @@ The output should remove Markdown code.
 """
     response = client.chat.completions.create(
         model = "gpt-4o",
-        max_tokens = 500,
+        max_tokens = 600,
         temperature = 0,
         messages = [
             {"role": "system", "content": prompt}
