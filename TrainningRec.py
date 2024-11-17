@@ -64,8 +64,9 @@ for exercise in exercise_list:
     exercise_text += f"Repetitions: {repetitions}\n\n"
 
 client = OpenAI(
-    api_key = os.getenv('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'),
+      api_key="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"
 )
+
 
 # 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
 
@@ -79,12 +80,12 @@ User Information:
 Available Exercises:
 {exercise_text}
 
-Now, based on the above information, provide a personalized training recommendation for the user.
+Now, based on the above information, provide some personalized training recommendations for the user. The output should be a JSON format sequences with keys: Name, Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5. Just json, no others things like tip or else.
 """
 
 
 completion = client.chat.completions.create(
-    model="gpt-4",
+    model="gpt-4o",
     messages=[
         {"role": "system", "content": prompt},
     ]
