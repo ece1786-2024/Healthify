@@ -2,7 +2,8 @@ from openai import OpenAI
 import os
 import pandas as pd
 
-file_path = r"C:\Users\ZZY\Desktop\1786project\Healthify\Final_Gym_Dataset.csv"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(current_dir, "Final_Gym_Dataset.csv")
 
 df = pd.read_csv(file_path)
 
