@@ -46,7 +46,7 @@ The output should remove Markdown code.
 
 # Example user input
 user_input = """
-{'Name': 'Jack', 'Age': 20, 'Weight': '80Kg', 'Gender': 'Male', 'Fitness_goals': 'Muscle gain', 'Heavy_Eater': 'Normal' , 'Physical_activity_level': 'Beginner with no experience, can exercise two days a week', 'Health_constraints': 'None mentioned', 'Dietary_restrictions': 'Prefers meat over vegetables, dislikes intense exercise'}
+{'Name': 'Jack', 'Height': 180, 'Age': 20, 'Weight': '80Kg', 'Gender': 'Male', 'Fitness_goals': 'Muscle gain', 'Heavy_Eater': 'Normal' , 'Physical_activity_level': 'Beginner with no experience, can exercise two days a week', 'Health_constraints': 'None mentioned', 'Dietary_restrictions': 'Prefers meat over vegetables, dislikes intense exercise'}
 """
 
 # Extract user profile
