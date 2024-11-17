@@ -145,7 +145,6 @@ def handle_chat():
 
         
 def show_profile():
-    # Simulate profile generation
     profile_window = tk.Toplevel(root)
     profile_window.title("Profile")
     profile_window.geometry("400x400")
@@ -267,6 +266,11 @@ root.title("Healthify")
 root.geometry("800x600")
 root.configure(bg="#f3f4e9")
 
+
+root.grid_rowconfigure(1, weight=1) 
+root.grid_columnconfigure(1, weight=1)  
+
+
 # Slide menu
 slide_menu = tk.Frame(root, width=200, bg="#556b2f", height=500)
 slide_menu.grid(row=0, column=0, rowspan=3, sticky="ns")
@@ -287,22 +291,32 @@ menu_button.pack(side="left", padx=10)
 # Main chat frame
 chat_frame = tk.Frame(root, bg="#f3f4e9", padx=20, pady=20)
 chat_frame.grid(row=1, column=1, sticky="nsew")
+chat_frame.grid_rowconfigure(0, weight=0)  
+chat_frame.grid_rowconfigure(1, weight=1)
+chat_frame.grid_rowconfigure(2, weight=0)
+chat_frame.grid_rowconfigure(3, weight=0)
+chat_frame.grid_columnconfigure(0, weight=1)  
 
 # welcome message
 welcome_label = tk.Label(chat_frame, text="Welcome to Healthify!", font=("Helvetica", 20), bg="#f3f4e9", fg="#556b2f")
-welcome_label.pack(pady=10)
+welcome_label.grid(row=0, column=0, pady=10)
 
 # chat display
-chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="disabled", bg="#f7f7f7", fg="black")
-chat_display.pack(pady=10)
+chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="disabled", bg="#f7f7f7", fg="black", font=("Helvetica", 15))
+chat_display.grid(row=1, column=0, sticky="nsew", pady=10)
 
 # Input bot for chat
-chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black")
-chat_input.pack(pady=10)
+chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black", font=("Helvetica", 15))
+chat_input.grid(row=2, column=0, sticky="ew", pady=10)
+
+def handle_enter(event):
+    handle_chat()
+    return "break"
+chat_input.bind("<Return>", handle_enter)
 
 # sent button
 send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#556b2f", fg="white", command=handle_chat)
-send_button.pack(pady=10)
+send_button.grid(row=3, column=0, pady=10)
 
 # profile button
 profile_button = tk.Button(root, text="My Profile", font=("Helvetica", 12), bg="#556b2f", fg="white", command=show_profile)
