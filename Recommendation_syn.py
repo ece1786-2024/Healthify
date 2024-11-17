@@ -95,16 +95,37 @@ def generate_diet_plan(diet_data):
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     for day in days:
         prompt = f"""
-        You are a diet planner AI. Using the following provided daily food choices, create a balanced diet plan for {day}. Each meal must include detailed cooking instructions for the user.
-        The plan must have:
-        - Morning: A combination of items (at least 2). Format: "Name: cooking instructions".
-        - Noon: A combination of items (at least 3). Format: "Name: cooking instructions".
-        - Evening: A combination of items (at least 3). Format: "Name: cooking instructions".
+        You are a diet planner AI. Using the following provided daily food choices, create a balanced diet plan for {day}.
+        Each meal must include:
+        - A combination of items (at least 2 for Morning, and at least 3 for Noon and Evening).
+        - Each food combination must be provided in the strict format: "Name: Cooking instructions".
+        - Replace "Name" with the actual food name or combination (e.g., "Salmon Salad").
+        - "Cooking instructions" should describe the steps to prepare the meal, including the cooking method, key ingredients, and any important preparation details.
 
-        Example Data:
+        Ensure that:
+        - The combinations are varied and nutritionally balanced.
+        - The instructions are simple enough for a home cook.
+        - The format strictly adheres to JSON, without any code fences, explanations, or additional text.
+
+        Example Output:
+        {{
+          "Morning": [
+            "Salmon Scramble: Pan-fry diced salmon with eggs, season with salt and pepper.",
+            "Quinoa Porridge: Cook quinoa in water, top with almonds and a drizzle of honey."
+          ],
+          "Noon": [
+            "Grilled Chicken Salad: Mix grilled chicken slices with fresh greens, drizzle with olive oil.",
+            "Brown Rice with Steamed Vegetables: Steam broccoli and carrots, serve with cooked brown rice."
+          ],
+          "Evening": [
+            "Baked Salmon: Season salmon with olive oil, bake at 375°F for 15 minutes.",
+            "Quinoa-Stuffed Bell Peppers: Fill bell peppers with cooked quinoa and bake."
+          ]
+        }}
+
+        Using the provided daily food choices below, generate the JSON output for {day}:
+
         {json.dumps(diet_data, indent=2)}
-
-        Ensure that the combinations are varied, nutritionally balanced, and simple enough for a home cook. The instructions should include the cooking method, key ingredients, and steps to prepare the meal. Return the output as a JSON object only, without any code fences, explanations, or additional text. The JSON object should have "Morning", "Noon", and "Evening" as keys with their respective food combinations and cooking instructions for {day}.
         """
         try:
             response = client.chat.completions.create(

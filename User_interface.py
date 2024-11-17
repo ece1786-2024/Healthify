@@ -21,7 +21,14 @@ df_fitness = to_dataframe(fitness_plan, plan_type="Fitness")
 df_combined = to_dataframe(combined_plan)
 
 print("diet plan")
-print(diet_plan)
+print(df_diet)
+
+
+
+######################################
+############ User Profile ############
+# From here to the end of handle_chat function
+
 
 
 messages = [
@@ -144,6 +151,13 @@ def handle_chat():
     chat_display.config(state="disabled")
 
         
+        
+####### End of User Profile ######### 
+#####################################
+        
+        
+        
+        
 def show_profile():
     profile_window = tk.Toplevel(root)
     profile_window.title("Profile")
@@ -154,117 +168,145 @@ def show_profile():
     profile_display.config(state="disabled")
     profile_display.pack(pady=10)
     
+    
+    
+    
 def show_plan(table_data, title):
     plan_window = tk.Toplevel(root)
     plan_window.title(title)
-    plan_window.geometry("900x600")
     
-    canvas = tk.Canvas(plan_window, bg="#f3f4e9")
-    frame = tk.Frame(canvas, bg="#f3f4e9")
+    plan_window.geometry("1200x800")
+    plan_window.resizable(True, True)
+    
+    canvas = tk.Canvas(plan_window, bg="#e6f7d1")
     scrollbar = ttk.Scrollbar(plan_window, orient="vertical", command=canvas.yview) 
     canvas.configure(yscrollcommand=scrollbar.set)
     
-    scrollbar.pack(side="right", fill="y")
     canvas.pack(side="left", fill="both", expand=True)
-    canvas.create_window((0,0), window=frame, anchor="nw") 
+    scrollbar.pack(side="right", fill="y")
     
-    header_frame = tk.Frame(frame, bg="#f3f4e9")
-    header_frame.grid(row=0, column=1, columnspan=7)
+    frame = tk.Frame(canvas, bg="#e6f7d1")
+    canvas_frame = canvas.create_window((0, 0), window=frame, anchor="nw")
+        
+    def on_frame_configure(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+    frame.bind("<Configure>", on_frame_configure)
+    
+    def on_canvas_configure(event):
+        canvas.itemconfig(canvas_frame, width=event.width)
+    canvas.bind("<Configure>", on_canvas_configure)
+    
+    header_frame = tk.Frame(frame, bg="#6ba96b")
+    header_frame.grid(row=0, column=1, columnspan=len(table_data)+1, sticky="nsew")
+    
+    empty_label = tk.Label(header_frame, text="", bg="#6ba96b")
+    empty_label.grid(row=0, column=0, sticky="nsew")
+    
     for i, day in enumerate(table_data.keys()):
-        label = tk.Label(header_frame, text=day, font=("Helvetica", 12), width=10, bg="#556b2f")
+        label = tk.Label(
+            header_frame, 
+            text=day, 
+            font=("Helvetica", 15), 
+            width=25, 
+            bg="#6ba96b",
+            fg="white",
+            justify="center",
+            wraplength=150
+            )
         label.grid(row=0, column=i, sticky="nsew")
     
     for row_i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
-        label = tk.Label(frame, text=time_of_day, font=("Helvetica", 12), width=10, anchor="w", bg="#556b2f")
-        label.grid(row=row_i+1, column=0, sticky="w")
+        label = tk.Label(
+            frame,
+            text=time_of_day, 
+            font=("Helvetica", 18, "bold"), 
+            width=15,
+            bg="#556b2f", 
+            fg="white",
+            anchor="center")   
+        label.grid(row=row_i+1, column=0, sticky="nsew")
         
         for col_i, day in enumerate(table_data.keys()):
             data = table_data[day][time_of_day]
-            label = tk.Label(frame, text=data, font=("Helvetica", 10), bg="#f3f4e9", anchor="w", wraplength=120, justify="left")
-            label.grid(row=row_i+1, column=col_i+1, sticky="w")
+            label = tk.Label(
+                frame, 
+                text=data, 
+                font=("Helvetica", 12), 
+                bg="#e6f7d1", 
+                anchor="w", 
+                wraplength=150, 
+                justify="left")
+            label.grid(row=row_i+1, column=col_i+1, sticky="nsew")
     
-    frame.update_idletasks()
-    canvas.config(scrollregion=canvas.bbox("all"))
+    total_columns = len(table_data) + 1
+    total_rows = len(["Morning", "Noon", "Evening"]) + 1
+    for i in range(total_columns):
+        frame.grid_columnconfigure(i, weight=3)
+        header_frame.grid_columnconfigure(i, weight=3)
+    for i in range(total_rows):
+        frame.grid_rowconfigure(i, weight=1)
+   
         
     
     
 def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=None):
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     table = {day: {"Morning": "", "Noon": "", "Evening": ""} for day in days}
-    
+        
+        
     for day in days:
-        if combined_timetable:
-            if "Diet" in combined_timetable[day]:
-                morning_diet = combined_timetable[day]["Diet"].get("Morning", [])
-                noon_diet = combined_timetable[day]["Diet"].get("Noon", [])
-                evening_diet = combined_timetable[day]["Diet"].get("Evening", [])
-                table[day]["Morning"] += f"Foods: {','.join(morning_diet)}\n"
-                table[day]["Noon"] += f"Foods: {','.join(noon_diet)}\n"
-                table[day]["Evening"] += f"Foods: {','.join(evening_diet)}\n"
-                
-            if "Fitness" in combined_timetable[day]:
-                morning_exercises = combined_timetable[day]["Fitness"].get("Morning", "")
-                evening_exercises = combined_timetable[day]["Fitness"].get("Evening", "")
-                table[day]["Morning"] += f"Exercises: {morning_exercises}\n"
-                table[day]["Evening"] += f"Exercises: {evening_exercises}\n"
-        
-        elif diet_plan or fitness_plan:
-            if diet_plan:
-                meals = diet_plan.get(day, {})
-                morning_diet = meals.get("Morning", [])
-                noon_diet = meals.get("Noon", [])
-                evening_diet = meals.get("Evening", [])
-                table[day]["Morning"] += f"Foods: {','.join(morning_diet)}\n"
-                table[day]["Noon"] += f"Foods: {','.join(noon_diet)}\n"
-                table[day]["Evening"] += f"Foods: {','.join(evening_diet)}\n"
-                
-            if fitness_plan:
-                exercises = fitness_plan.get(day, {})
-                morning_exercises = exercises.get("Morning", "")
-                evening_exercises = exercises.get("Evening", "")
-                table[day]["Morning"] += f"Exercises: {','.join(morning_exercises)}\n"
-                table[day]["Evening"] += f"Exercises: {','.join(evening_exercises)}\n"
-                
-        
-        
-        
-        
-        
-        """table[day]["Morning"] = ""
+        table[day]["Morning"] = ""
         table[day]["Noon"] = ""
         table[day]["Evening"] = ""
         
         if diet_plan and not combined_timetable:
-            for meal_str in diet_plan.get(day, []):
-                if ': ' in meal_str:
-                    meal_type, foods = meal_str.split(': ', 1)
-                    if meal_type == "Breakfast":
-                        table[day]["Morning"] += f"Foods:\n{foods}\n"
-                    elif meal_type == "Lunch":
-                        table[day]["Noon"] += f"Foods:\n{foods}\n"
-                    elif meal_type == "Dinner":
-                        table[day]["Evening"] += f"Foods:\n{foods}\n"
+            morning_diet = diet_plan.get(day, {}).get("Morning", [])
+            if morning_diet:
+                formatted_morning = "\n".join(morning_diet)
+                table[day]["Morning"] += f"Foods:\n{formatted_morning}\n"
+            
+            noon_diet = diet_plan.get(day, {}).get("Noon", [])
+            if noon_diet:
+                formatted_noon = "\n".join(noon_diet)
+                table[day]["Noon"] += f"Foods:\n{formatted_noon}\n"
+                
+            evening_diet = diet_plan.get(day, {}).get("Evening", [])
+            if evening_diet:
+                formatted_evening = "\n".join(evening_diet)
+                table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
                         
         if fitness_plan and not combined_timetable:
-            exercises = fitness_plan.get(day, "No exercises")
-            table[day]["Morning"] += f"Exercises:\n{exercises}\n"
-            table[day]["Evening"] += f"Exercises:\n{exercises}\n"
+            exercises = fitness_plan.get(day, {})
+            morning_exercises = exercises.get("Morning", [])
+            evening_exercises = exercises.get("Evening", [])
+            morning_exercises_text = ",".join(morning_exercises)
+            evening_exercises_text = ",".join(evening_exercises)
+            table[day]["Morning"] += f"Exercises:\n{morning_exercises_text}\n"
+            table[day]["Evening"] += f"Exercises:\n{evening_exercises_text}\n"
                 
                 
         if combined_timetable:
-            for meal_str in diet_plan.get(day, []):
-                if ': ' in meal_str:
-                    meal_type, foods = meal_str.split(': ', 1)
-                    if meal_type == "Breakfast":
-                        table[day]["Morning"] += f"Foods:\n{foods}\n"
-                    elif meal_type == "Lunch":
-                        table[day]["Noon"] += f"Foods:\n{foods}\n"
-                    elif meal_type == "Dinner":
-                        table[day]["Evening"] += f"Foods:\n{foods}\n"
-            exercises = fitness_plan.get(day, "No exercises")
-            table[day]["Morning"] += f"Exercises:\n{exercises}\n"
-            table[day]["Evening"] += f"Exercises:\n{exercises}\n"
-            """
+            morning_diet = diet_plan.get(day, {}).get("Morning", [])
+            if morning_diet:
+                formatted_morning = "\n".join(morning_diet)
+                table[day]["Morning"] += f"Foods:\n{formatted_morning}\n"
+            
+            noon_diet = diet_plan.get(day, {}).get("Noon", [])
+            if noon_diet:
+                formatted_noon = "\n".join(noon_diet)
+                table[day]["Noon"] += f"Foods:\n{formatted_noon}\n"
+                
+            evening_diet = diet_plan.get(day, {}).get("Evening", [])
+            if evening_diet:
+                formatted_evening = "\n".join(evening_diet)
+                table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
+            
+            morning_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Morning", [])
+            morning_exercise_text = ", ".join(morning_exercises)
+            table[day]["Morning"] += f"Exercises: {morning_exercise_text}\n"
+            evening_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Evening", [])
+            evening_exercise_text = ", ".join(evening_exercises)
+            table[day]["Evening"] += f"Exercises: {evening_exercise_text}\n"
 
 
                 
@@ -301,7 +343,7 @@ def toggle_menu():
 root = tk.Tk()
 root.title("Healthify")
 root.geometry("800x600")
-root.configure(bg="#f3f4e9")
+root.configure(bg="#e6f7d1")
 
 
 root.grid_rowconfigure(1, weight=1) 
@@ -309,7 +351,7 @@ root.grid_columnconfigure(1, weight=1)
 
 
 # Slide menu
-slide_menu = tk.Frame(root, width=200, bg="#556b2f", height=500)
+slide_menu = tk.Frame(root, width=200, bg="#6ba96b", height=500)
 slide_menu.grid(row=0, column=0, rowspan=3, sticky="ns")
 slide_menu.grid_remove()  # Initially hidden
 
@@ -319,14 +361,14 @@ tk.Button(slide_menu, text="My Fitness Plan", **menu_button_style, command=show_
 tk.Button(slide_menu, text="My Timetable", **menu_button_style, command=show_timetable).pack(pady=15, padx=10, fill="x")
 
 # Header and toggle button
-header = tk.Frame(root, bg="#f3f4e9")
+header = tk.Frame(root, bg="#e6f7d1")
 header.grid(row=0, column=1, sticky="ew")
 
-menu_button = tk.Button(header, text="☰", font=("Helvetica", 10), bg="#f3f4e9", relief="flat", command=toggle_menu)
+menu_button = tk.Button(header, text="☰", font=("Helvetica", 10), bg="#e6f7d1", relief="flat", command=toggle_menu)
 menu_button.pack(side="left", padx=10)
 
 # Main chat frame
-chat_frame = tk.Frame(root, bg="#f3f4e9", padx=20, pady=20)
+chat_frame = tk.Frame(root, bg="#e6f7d1", padx=20, pady=20)
 chat_frame.grid(row=1, column=1, sticky="nsew")
 chat_frame.grid_rowconfigure(0, weight=0)  
 chat_frame.grid_rowconfigure(1, weight=1)
@@ -335,7 +377,7 @@ chat_frame.grid_rowconfigure(3, weight=0)
 chat_frame.grid_columnconfigure(0, weight=1)  
 
 # welcome message
-welcome_label = tk.Label(chat_frame, text="Welcome to Healthify!", font=("Helvetica", 20), bg="#f3f4e9", fg="#556b2f")
+welcome_label = tk.Label(chat_frame, text="Welcome to Healthify!", font=("Helvetica", 20), bg="#e6f7d1", fg="#6ba96b")
 welcome_label.grid(row=0, column=0, pady=10)
 
 # chat display
@@ -352,11 +394,20 @@ def handle_enter(event):
 chat_input.bind("<Return>", handle_enter)
 
 # sent button
-send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#556b2f", fg="white", command=handle_chat)
+send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=handle_chat)
 send_button.grid(row=3, column=0, pady=10)
 
 # profile button
-profile_button = tk.Button(root, text="My Profile", font=("Helvetica", 12), bg="#556b2f", fg="white", command=show_profile)
+profile_button = tk.Button(
+    root, 
+    text="My Profile", 
+    font=("Helvetica", 12), 
+    bg="#6ba96b", 
+    fg="white", 
+    command=show_profile,
+    relief="flat",
+    anchor="center"
+    )
 profile_button.grid(row=2, column=0, pady=10, sticky="sw")
 
 
