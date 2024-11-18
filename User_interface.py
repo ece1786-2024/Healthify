@@ -10,7 +10,7 @@ import os
 
 
 client = OpenAI(
-    api_key = os.getenv('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'),
+    api_key = os.getenv('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'),
 )
 
 diet_plan = generate_diet_plan(diet_data)
@@ -35,8 +35,8 @@ messages = [
         {"role": "system", 
          "content":
             "You are a friendly fitness assistant, responsible for having a natural conversation with the user,"
-            "Gradually collect the following information: name, age, gender, weight, fitness goals,"
-            "Current physical activity level (low, normal, high), health restrictions, and dietary preferences."
+            "Gradually collect the following information: name, age, gender, height, weight, fitness goals,"
+            "Dietary preference(Heart Health, Low Sugar, High Energy, General), Current physical activity level (low, normal, high), health restrictions, dietary restrictions."
             "If null is present, ask the question and respond appropriately based on the user's answer."
         }
 ]
@@ -45,22 +45,26 @@ user_profile = {
     "name": None,
     "age": None,
     "gender": None,
+    "height": None,
     "weight": None,
     "fitness goal": None,
+    "dietary preference": None,
     "current physical activity levels": None,
     "health restrictions": None,
-    "dietary preferences": None
+    "dietary restrictions": None
 }
 
 info_keys = {
         "name": "name",
         "age": "age",
         "gender": "gender",
+        "height": "height",
         "weight": "weight",
         "fitness goal": "fitness goal",
+        "dietary preference": "dietary preference",
         "current physical activity level": "current physical activity levels",
         "health restrictions": "health restrictions",
-        "dietary preferences": "dietary preferences"  
+        "dietary restrictions": "dietary restrictions"  
     }
 
 collected_keys = set()
@@ -96,9 +100,13 @@ def handle_chat():
     extraction_prompt = (
         "As an AI assistant, extract any personal information provided from the user's response below. "
         "Include the following keys exactly as specified: "
-        "'name', 'age', 'gender', 'weight', 'fitness goal', "
-        "'current physical activity level, 'health restrictions', 'dietary preferences'. "
+        "'name', 'age', 'gender','height', 'weight', 'fitness goal', "
+        "'dietary preferences', 'current physical activity level, 'health restrictions', 'dietary restrictions'. "
+        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'null' if user does not provide any information."
+        #"for dietary preference,  mark as 'Heart Health' if user input is heart health, 'Low Sugar' if user input is low sugar, 'High Energy' if user input is high energy, 'General' if user doesn't have any preference."
+        "for dietary preference, mark as 'Heart Health', 'Low Sugar', 'High Energy', 'General', 'null' if user does not provide any information."
         "mark current physical activity level as low if user is newbie, normal if User has light exercise, high if user ususally do exercise."
+        "for dietary restrictions, mark as 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten Free', 'Lactose Free', 'Nut Allergy', 'Shellfish Allergy', 'null' if user does not provide any information."
         "If the user indicates that he does not know or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
         "Please output the new information in JSON format, without explanation or additional text. "
         "If a piece of information is not provided, do not include it in the JSON."
