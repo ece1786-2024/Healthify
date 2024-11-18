@@ -150,15 +150,34 @@ def generate_diet_plan(diet_data):
         
 def generate_fitness_plan(fitness_data):
     prompt = f"""
-    You are a fitness trainer AI. Using the following provided exercise choices, create a weekly fitness plan. And rememeber to give the user instructions on how to perform the exercises (repetition and duration).
-    Each day must have:
-    - Morning: A combination of exercises (at least two).
-    - Evening: A combination of exercises (at least two).
+    You are a fitness trainer AI. Create a weekly fitness plan with the following requirements:
+
+    1. Each day has:
+    - Morning: At least 2 exercises.
+    - Evening: At least 2 exercises.
+
+    2. Format the output strictly as:
+    {{
+        "Monday": {{
+            "Morning": ["Exercise Name: Repetition: X, Duration: Y", "Exercise Name: Repetition: X, Duration: Y"],
+            "Evening": ["Exercise Name: Repetition: X, Duration: Y", "Exercise Name: Repetition: X, Duration: Y"]
+        }},
+        ...
+        "Sunday": {{
+            "Morning": ["Exercise Name: Repetition: X, Duration: Y", "Exercise Name: Repetition: X, Duration: Y"],
+            "Evening": ["Exercise Name: Repetition: X, Duration: Y", "Exercise Name: Repetition: X, Duration: Y"]
+        }}
+    }}
 
     Example Data:
     {json.dumps(fitness_data, indent=2)}
 
-    Ensure that each day's combinations are varied and balanced and must be sufficiently intense. Return the output as a JSON object where each key is a day of the week, and the value contains "Morning" and "Evening" with their respective exercise combinations.
+    Rules:
+    - Use the format above exactly.
+    - No explanations, extra text, or code fences.
+    - Ensure variety, balance, and intensity.
+
+    Output only as a JSON object.
     """
     try:
         response = client.chat.completions.create(

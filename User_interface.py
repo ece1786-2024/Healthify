@@ -270,7 +270,7 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
         table[day]["Noon"] = ""
         table[day]["Evening"] = ""
         
-        if diet_plan and not combined_timetable:
+        if diet_plan:
             morning_diet = diet_plan.get(day, {}).get("Morning", [])
             if morning_diet:
                 formatted_morning = "\n".join(morning_diet)
@@ -286,14 +286,28 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                 formatted_evening = "\n".join(evening_diet)
                 table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
                         
-        if fitness_plan and not combined_timetable:
-            exercises = fitness_plan.get(day, {})
+        if fitness_plan:
+            """exercises = fitness_plan.get(day, {})
             morning_exercises = exercises.get("Morning", [])
             evening_exercises = exercises.get("Evening", [])
             morning_exercises_text = ",".join(morning_exercises)
             evening_exercises_text = ",".join(evening_exercises)
             table[day]["Morning"] += f"Exercises:\n{morning_exercises_text}\n"
             table[day]["Evening"] += f"Exercises:\n{evening_exercises_text}\n"
+            """
+            morning_exercises = fitness_plan.get(day, {}).get("Morning", [])
+            if not morning_exercises and "Fitness" in fitness_plan.get(day, {}):  # Adjust for inconsistent structure
+                morning_exercises = fitness_plan.get(day, {}).get("Fitness", {}).get("Morning", [])
+            morning_exercise_text = ", ".join(morning_exercises)
+            table[day]["Morning"] += f"\nExercises:\n{morning_exercise_text}\n"
+            
+            table[day]["Noon"] += "No Exercise at Noon, take a rest\n"
+            
+            evening_exercises = fitness_plan.get(day, {}).get("Evening", [])
+            if not evening_exercises and "Fitness" in fitness_plan.get(day, {}):  # Adjust for inconsistent structure
+                evening_exercises = fitness_plan.get(day, {}).get("Fitness", {}).get("Evening", [])
+            evening_exercise_text = ", ".join(evening_exercises)
+            table[day]["Evening"] += f"\nExercises:\n{evening_exercise_text}\n"
                 
                 
         if combined_timetable:
@@ -314,10 +328,13 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
             
             morning_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Morning", [])
             morning_exercise_text = ", ".join(morning_exercises)
-            table[day]["Morning"] += f"Exercises: {morning_exercise_text}\n"
+            table[day]["Morning"] += f"\nExercises:\n{morning_exercise_text}\n"
+            
+            table[day]["Noon"] += "No Exercise at Noon, take a rest\n"
+            
             evening_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Evening", [])
             evening_exercise_text = ", ".join(evening_exercises)
-            table[day]["Evening"] += f"Exercises: {evening_exercise_text}\n"
+            table[day]["Evening"] += f"\nExercises:\n{evening_exercise_text}\n"
 
 
                 
