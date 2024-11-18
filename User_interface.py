@@ -36,12 +36,21 @@ messages = [
          "content":
             "You are a friendly fitness assistant, responsible for having a natural conversation with the user,"
             "Gradually collect the following information: name, age, gender, weight, fitness goals,"
-            "Current physical activity levels, health restrictions, and dietary preferences."
-            "Ask one question at a time and respond appropriately based on the user's answers."
+            "Current physical activity level (low, normal, high), health restrictions, and dietary preferences."
+            "If null is present, ask the question and respond appropriately based on the user's answer."
         }
 ]
 
-user_profile = {}
+user_profile = {
+    "name": None,
+    "age": None,
+    "gender": None,
+    "weight": None,
+    "fitness goal": None,
+    "current physical activity levels": None,
+    "health restrictions": None,
+    "dietary preferences": None
+}
 
 info_keys = {
         "name": "name",
@@ -49,7 +58,7 @@ info_keys = {
         "gender": "gender",
         "weight": "weight",
         "fitness goal": "fitness goal",
-        "current physical activity levels": "current physical activity levels",
+        "current physical activity level": "current physical activity levels",
         "health restrictions": "health restrictions",
         "dietary preferences": "dietary preferences"  
     }
@@ -88,7 +97,9 @@ def handle_chat():
         "As an AI assistant, extract any personal information provided from the user's response below. "
         "Include the following keys exactly as specified: "
         "'name', 'age', 'gender', 'weight', 'fitness goal', "
-        "'current physical activity levels', 'health restrictions', 'dietary preferences'. "
+        "'current physical activity level, 'health restrictions', 'dietary preferences'. "
+        "mark current physical activity level as low if user is newbie, normal if User has light exercise, high if user ususally do exercise."
+        "If the user indicates that he does not know or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
         "Please output the new information in JSON format, without explanation or additional text. "
         "If a piece of information is not provided, do not include it in the JSON."
         "\n\nUser's reply:\n"
@@ -137,7 +148,7 @@ def handle_chat():
         return
     
     response = client.chat.completions.create(
-        model = "gpt-3.5-turbo",
+        model = "gpt-4o",
         messages = messages,
         max_tokens = 150,
         temperature = 0.7,
@@ -170,7 +181,7 @@ def show_profile():
     
     
     
-    
+
 def show_plan(table_data, title):
     plan_window = tk.Toplevel(root)
     plan_window.title(title)
@@ -246,9 +257,9 @@ def show_plan(table_data, title):
     for i in range(total_rows):
         frame.grid_rowconfigure(i, weight=1)
    
-        
+     
     
-    
+
 def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=None):
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     table = {day: {"Morning": "", "Noon": "", "Evening": ""} for day in days}
@@ -312,11 +323,11 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                 
                         
     return table
-    
+   
     
     
      
-      
+
 def show_diet_plan():
     table_data = prepare_table_data(diet_plan=diet_plan)
     show_plan(table_data, "Diet Plan")
@@ -328,7 +339,7 @@ def show_fitness_plan():
 def show_timetable():
     table_data = prepare_table_data(diet_plan=diet_plan, fitness_plan=fitness_plan, combined_timetable=combined_plan)
     show_plan(table_data, "Combined Timetable")
-    
+
     
 
 # Function to show the slide menu
@@ -420,3 +431,4 @@ start_chat()
 
 # Run the application
 root.mainloop()
+
