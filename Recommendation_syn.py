@@ -8,7 +8,7 @@ client = OpenAI(
     api_key = os.getenv('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'),
 )
 
-diet_data = {
+"""diet_data = {
     "Name": "Jack",
     "BMI": 24.69,
     "TDEE": 2500,
@@ -87,7 +87,124 @@ fitness_data = {
         "Rest_time": "60 seconds between sets"
     }
 }
+"""
 
+diet_data = {
+    "Name": "Terry",
+    "BMI": 24.7,
+    "TDEE": 2500,
+    "Daily Food Choices_1": [
+      {"name": "Tempeh", "weight": "200g"},
+      {"name": "Quinoa, uncooked", "weight": "150g"},
+      {"name": "Edamame, prepared, frozen", "weight": "100g"},   
+      {"name": "Oats", "weight": "100g"},
+      {"name": "Fish, raw, wild, coho, salmon", "weight": "150g"}
+    ],
+    "Daily Food Choices_2": [
+      {"name": "Tofu, fried", "weight": "200g"},
+      {"name": "Lentils, raw", "weight": "150g"},
+      {"name": "Barley, hulled", "weight": "150g"},
+      {"name": "Fish, raw, chinook, salmon", "weight": "150g"},  
+      {"name": "Edamame, unprepared, frozen", "weight": "100g"}  
+    ],
+    "Daily Food Choices_3": [
+      {"name": "Soybeans, raw, mature seeds", "weight": "150g"}, 
+      {"name": "Wild rice, raw", "weight": "150g"},
+      {"name": "Tempeh, cooked", "weight": "200g"},
+      {"name": "Fish, raw, monkfish", "weight": "150g"},
+      {"name": "Oat bran, raw", "weight": "100g"}
+    ],
+    "Daily Food Choices_4": [
+      {"name": "Noodles, enriched, dry, egg", "weight": "150g"}, 
+      {"name": "Soy flour, defatted", "weight": "100g"},
+      {"name": "Fish, dry heat, cooked, cusk", "weight": "150g"},
+      {"name": "Millet, raw", "weight": "150g"},
+      {"name": "Edamame, prepared, frozen", "weight": "100g"}    
+    ],
+    "Daily Food Choices_5": [
+      {"name": "Vital wheat gluten", "weight": "100g"},
+      {"name": "Couscous, dry", "weight": "150g"},
+      {"name": "Fish, raw, scup", "weight": "150g"},
+      {"name": "Soy flour, low-fat", "weight": "100g"},
+      {"name": "Tempeh", "weight": "200g"}
+    ]
+  }
+
+fitness_data = {
+    "Name": "Terry",
+    "Exercise Choices_1": {
+      "Exercise": "Bench barbell roll-out",
+      "Body Part": "Abdominals",
+      "Equipment": "Barbell",
+      "Duration": "118 seconds",
+      "Repetitions": 10
+    },
+    "Exercise Choices_2": {
+      "Exercise": "Dumbbell spell caster", 
+      "Body Part": "Abdominals",
+      "Equipment": "Dumbbell",
+      "Duration": "62 seconds",
+      "Repetitions": 14
+    },
+    "Exercise Choices_3": {
+      "Exercise": "Cable reverse crunch",  
+      "Body Part": "Abdominals",
+      "Equipment": "Cable",
+      "Duration": "102 seconds",
+      "Repetitions": 14
+   },
+    "Exercise Choices_4": {
+      "Exercise": "Barbell Side Bend",     
+      "Body Part": "Abdominals",
+      "Equipment": "Barbell",
+      "Duration": "118 seconds",
+      "Repetitions": 8
+    },
+    "Exercise Choices_5": {
+      "Exercise": "Plate Twist",
+      "Body Part": "Abdominals",
+      "Equipment": "Other",
+      "Duration": "53 seconds",
+      "Repetitions": 16
+    }
+  }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 
 def generate_diet_plan(diet_data):
