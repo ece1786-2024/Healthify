@@ -72,7 +72,7 @@ collected_keys = set()
 
 def start_chat():
     response = client.chat.completions.create(
-        model = "gpt-3.5-turbo",
+        model = "gpt-4o",
         messages = messages,
         max_tokens = 150,
         temperature = 0.7,
@@ -102,9 +102,12 @@ def handle_chat():
         "Include the following keys exactly as specified: "
         "'name', 'age', 'gender','height', 'weight', 'fitness goal', "
         "'dietary preferences', 'current physical activity level, 'health restrictions', 'dietary restrictions'. "
-        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'null' if user does not provide any information."
+        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'Improved Endurance' if user wants to imrpove endurance, 'Stress Relief' if user wants to relieve stress, 'Heart Health' if user wants to improve heart health, 'null' if user does not provide any information."
+        "for dietary preference, mark as 'Heart Health' if user wants to improve heart health, 'Low Sugar' if user wants lower sugar intake, 'High Energy' if user wants to have high energy food, 'General', 'null' if user does not provide any information."
+        #"Map dietary preferences to one of the following: 'Heart Health', 'Low Sugar', 'High Energy', or 'General'. "
+        #"If the user's input is unclear, try to infer it or set it to 'unknown'. "
         #"for dietary preference,  mark as 'Heart Health' if user input is heart health, 'Low Sugar' if user input is low sugar, 'High Energy' if user input is high energy, 'General' if user doesn't have any preference."
-        "for dietary preference, mark as 'Heart Health', 'Low Sugar', 'High Energy', 'General', 'null' if user does not provide any information."
+        #"for dietary preference, mark as 'Heart Health', 'Low Sugar', 'High Energy', 'General', 'null' if user does not provide any information."
         "mark current physical activity level as low if user is newbie, normal if User has light exercise, high if user ususally do exercise."
         "for dietary restrictions, mark as 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten Free', 'Lactose Free', 'Nut Allergy', 'Shellfish Allergy', 'null' if user does not provide any information."
         "If the user indicates that he does not know or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
