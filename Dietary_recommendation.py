@@ -9,18 +9,24 @@ file_path = os.path.join(current_dir, "Enhanced_Nutrition_Dataset.csv")
 df = pd.read_csv(file_path)
 
 # Example user input
-user_input = {'Name': 'Jack', 'Height': 180, 'Age': 20, 'Weight': '80Kg', 'Gender': 'Male', 'Fitness_goals': 'Muscle Gain', 'Dietary_preference': 'Heart Health' , 'Heavy_Eater': 'Normal' , 'Physical_activity_level': 'Beginner with no experience, can exercise two days a week', 'Health_constraints': 'None mentioned', 'Dietary_restrictions': 'Prefers meat over vegetables, dislikes intense exercise'}
+user_input = {'Name': 'Terry', 'Height': 181, 'Age': 23, 'Weight': '81Kg', 'Gender': 'Male', 'Fitness_goals': 'Weight Loss', 'Dietary_preference': 'High Energy' , 'Physical_activity_level': 'Beginner with no experience, can exercise two days a week', 'Health_constraints': 'None mentioned', 'Dietary_restrictions': 'allergy to peanuts'}
 
-# Detect the dietary purpose based on the fitness goals
+# Detect the dietary purpose based on the fitness goals (Default: Weight Loss)
 def dietary_purpose(Fitness_goals):
-        if Fitness_goals == 'Muscle Gain':
-            return 'Muscle Gain'
-        elif Fitness_goals == 'Weight Loss':
-            return 'Weight Loss'
-        else:
-            return 'Weight Loss'
+    if Fitness_goals == 'Muscle Gain':
+        return 'Muscle Gain'
+    elif Fitness_goals == 'Weight Loss':
+        return 'Weight Loss'
+    elif Fitness_goals == 'Improved Endurance':
+        return 'Improved Endurance'
+    elif Fitness_goals == 'Stress Relief':
+        return 'Stress Relief'
+    elif Fitness_goals == 'Heart Health':
+        return 'Heart Health'
+    else:
+        return 'Weight Loss'
 
-# Detect the dietary preference based on the dietary preference
+# Detect the dietary preference based on the dietary preference (Default: General)
 def dietary_preference(Dietary_preference):
     if Dietary_preference == 'Heart Health':
         return 'Heart Health'
@@ -32,23 +38,33 @@ def dietary_preference(Dietary_preference):
         return 'General'
     
 # Set those parameters based on the user input
-user_preference = dietary_preference(user_input['Dietary_preference'])
 user_purpose = dietary_purpose(user_input['Fitness_goals'])
+user_preference = dietary_preference(user_input['Dietary_preference'])
+
 
 # Filter the candidate foods based on the user's dietary preference and fitness goals
-candidate_foods = df[df['Muscle Gain'] == int(user_purpose == 'Muscle Gain')]
+if user_purpose == 'Muscle Gain':
+    candidate_foods = df[df['muscle_gain'] == 1]
+elif user_purpose == 'Weight Loss':
+    candidate_foods = df[df['weight_loss'] == 1]
+elif user_purpose == 'Improved Endurance':
+    candidate_foods = df[df['improved_endurance'] == 1]
+elif user_purpose == 'Stress Relief':
+    candidate_foods = df[df['stress_relief'] == 1]
+elif user_purpose == 'Heart Health':
+    candidate_foods = df[df['heart_health'] == 1]
+
 
 if user_preference == 'Heart Health':
-    candidate_foods = candidate_foods[candidate_foods['Category'] == 'Heart Health']
+    candidate_foods = candidate_foods[candidate_foods['category'] == 'Heart Health']
 elif user_preference == 'Low Sugar':
-    candidate_foods = candidate_foods[candidate_foods['Category'] == 'Low Sugar']
+    candidate_foods = candidate_foods[candidate_foods['category'] == 'Low Sugar']
 elif user_preference == 'High Energy':
-    candidate_foods = candidate_foods[candidate_foods['Category'] == 'High Energy']
-
+    candidate_foods = candidate_foods[candidate_foods['category'] == 'High Energy']
 
 food_list = candidate_foods[['name', 'calories', 'total_fat', 'protein', 'carbohydrate']].to_dict('records')
-# Limit the number of foods to 100
-food_list = food_list[:100]
+# Limit the number of foods to 200
+food_list = food_list[:200]
 
 # Convert the food list to a text format
 food_text = ""
@@ -93,7 +109,7 @@ The output should remove Markdown code.
 """
     response = client.chat.completions.create(
         model = "gpt-4o",
-        max_tokens = 600,
+        max_tokens = 700,
         temperature = 0,
         messages = [
             {"role": "system", "content": prompt}
