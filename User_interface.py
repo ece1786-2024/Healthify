@@ -10,7 +10,7 @@ import os
 
 
 client = OpenAI(
-    api_key = os.getenv('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'),
+    api_key = os.getenv('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'),
 )
 
 diet_plan = generate_diet_plan(diet_data)
@@ -35,8 +35,8 @@ messages = [
         {"role": "system", 
          "content":
             "You are a friendly fitness assistant, responsible for having a natural conversation with the user,"
-            "Gradually collect the following information: name, age, gender, weight, fitness goals,"
-            "Current physical activity level (low, normal, high), health restrictions, and dietary preferences."
+            "Gradually collect the following information: name, age, gender, height, weight, fitness goals,"
+            "Dietary preference(Heart Health, Low Sugar, High Energy, General), Current physical activity level (beginner, intermediate, advanced), health restrictions, dietary restrictions."
             "If null is present, ask the question and respond appropriately based on the user's answer."
         }
 ]
@@ -45,22 +45,26 @@ user_profile = {
     "name": None,
     "age": None,
     "gender": None,
+    "height": None,
     "weight": None,
     "fitness goal": None,
+    "dietary preference": None,
     "current physical activity levels": None,
     "health restrictions": None,
-    "dietary preferences": None
+    "dietary restrictions": None
 }
 
 info_keys = {
         "name": "name",
         "age": "age",
         "gender": "gender",
+        "height": "height",
         "weight": "weight",
         "fitness goal": "fitness goal",
+        "dietary preference": "dietary preference",
         "current physical activity level": "current physical activity levels",
         "health restrictions": "health restrictions",
-        "dietary preferences": "dietary preferences"  
+        "dietary restrictions": "dietary restrictions"  
     }
 
 collected_keys = set()
@@ -68,7 +72,7 @@ collected_keys = set()
 
 def start_chat():
     response = client.chat.completions.create(
-        model = "gpt-3.5-turbo",
+        model = "gpt-4o",
         messages = messages,
         max_tokens = 150,
         temperature = 0.7,
@@ -96,10 +100,13 @@ def handle_chat():
     extraction_prompt = (
         "As an AI assistant, extract any personal information provided from the user's response below. "
         "Include the following keys exactly as specified: "
-        "'name', 'age', 'gender', 'weight', 'fitness goal', "
-        "'current physical activity level, 'health restrictions', 'dietary preferences'. "
-        "mark current physical activity level as low if user is newbie, normal if User has light exercise, high if user ususally do exercise."
-        "If the user indicates that he does not know or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
+        "'name', 'age', 'gender','height', 'weight', 'fitness goal', "
+        "'dietary preference', 'current physical activity level, 'health restrictions', 'dietary restrictions'. "
+        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'Improved Endurance' if user wants to imrpove endurance, 'Relieve stress' if user wants to relieve stress, 'unknown' if user does not provide any information."
+        "for dietary preference(User want to eat), mark 'Heart Health': If the user prefers foods that improve heart health, mark 'Low Sugar': If the user prefers foods that lower sugar intake, mark 'High Energy': If the user prefers foods that provide high energy, mark 'General': If the user has no specific dietary requirements, mark 'Unknown': If the user has not provided any dietary preference information."
+        "mark current physical activity level as beginner if user is newbie, intermediate if User has light exercise, advanced if user ususally do exercise."
+        "For dietary restrictions(User can not eat), if the user does not provide any information, it is marked as 'unknown', if the user boycotts meat, it is marked as 'vegetarian', if the user does not eat other meat but fish, it is marked as 'pescatarian'."
+        "If the user indicates that he can not give or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
         "Please output the new information in JSON format, without explanation or additional text. "
         "If a piece of information is not provided, do not include it in the JSON."
         "\n\nUser's reply:\n"
@@ -112,7 +119,7 @@ def handle_chat():
                 {"role": "system", "content": extraction_prompt}
             ],
             max_tokens= 150,
-            temperature= 0,
+            temperature= 0.7,
         )
     
     extraction_result = extraction_response.choices[0].message.content.strip()
@@ -269,34 +276,8 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
         table[day]["Morning"] = ""
         table[day]["Noon"] = ""
         table[day]["Evening"] = ""
-        if combined_timetable:
-            morning_diet = combined_timetable.get(day, {}).get("Diet", {}).get("Morning", [])
-            if morning_diet:
-                formatted_morning = "\n".join(morning_diet)
-                table[day]["Morning"] += f"Foods:\n{formatted_morning}\n"
-            
-            noon_diet = combined_timetable.get(day, {}).get("Diet", {}).get("Noon", [])
-            if noon_diet:
-                formatted_noon = "\n".join(noon_diet)
-                table[day]["Noon"] += f"Foods:\n{formatted_noon}\n"
-                
-            evening_diet = combined_timetable.get(day, {}).get("Diet", {}).get("Evening", [])
-            if evening_diet:
-                formatted_evening = "\n".join(evening_diet)
-                table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
-            
-            morning_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Morning", [])
-            morning_exercise_text = ", ".join(morning_exercises)
-            table[day]["Morning"] += f"\nExercises:\n{morning_exercise_text}\n"
-            
-            table[day]["Noon"] += "\nNo Exercise at Noon, take a rest\n"
-            
-            evening_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Evening", [])
-            evening_exercise_text = ", ".join(evening_exercises)
-            table[day]["Evening"] += f"\nExercises:\n{evening_exercise_text}\n"
-            
-            
-        elif diet_plan:
+        
+        if diet_plan and not combined_timetable:
             morning_diet = diet_plan.get(day, {}).get("Morning", [])
             if morning_diet:
                 formatted_morning = "\n".join(morning_diet)
@@ -312,23 +293,38 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                 formatted_evening = "\n".join(evening_diet)
                 table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
                         
-        elif fitness_plan:
-            morning_exercises = fitness_plan.get(day, {}).get("Morning", [])
-            if not morning_exercises and "Fitness" in fitness_plan.get(day, {}):  # Adjust for inconsistent structure
-                morning_exercises = fitness_plan.get(day, {}).get("Fitness", {}).get("Morning", [])
+        if fitness_plan and not combined_timetable:
+            exercises = fitness_plan.get(day, {})
+            morning_exercises = exercises.get("Morning", [])
+            evening_exercises = exercises.get("Evening", [])
+            morning_exercises_text = ",".join(morning_exercises)
+            evening_exercises_text = ",".join(evening_exercises)
+            table[day]["Morning"] += f"Exercises:\n{morning_exercises_text}\n"
+            table[day]["Evening"] += f"Exercises:\n{evening_exercises_text}\n"
+                
+                
+        if combined_timetable:
+            morning_diet = diet_plan.get(day, {}).get("Morning", [])
+            if morning_diet:
+                formatted_morning = "\n".join(morning_diet)
+                table[day]["Morning"] += f"Foods:\n{formatted_morning}\n"
+            
+            noon_diet = diet_plan.get(day, {}).get("Noon", [])
+            if noon_diet:
+                formatted_noon = "\n".join(noon_diet)
+                table[day]["Noon"] += f"Foods:\n{formatted_noon}\n"
+                
+            evening_diet = diet_plan.get(day, {}).get("Evening", [])
+            if evening_diet:
+                formatted_evening = "\n".join(evening_diet)
+                table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
+            
+            morning_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Morning", [])
             morning_exercise_text = ", ".join(morning_exercises)
-            table[day]["Morning"] += f"\nExercises:\n{morning_exercise_text}\n"
-            
-            table[day]["Noon"] += "\nNo Exercise at Noon, take a rest\n"
-            
-            evening_exercises = fitness_plan.get(day, {}).get("Evening", [])
-            if not evening_exercises and "Fitness" in fitness_plan.get(day, {}):  # Adjust for inconsistent structure
-                evening_exercises = fitness_plan.get(day, {}).get("Fitness", {}).get("Evening", [])
+            table[day]["Morning"] += f"Exercises: {morning_exercise_text}\n"
+            evening_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Evening", [])
             evening_exercise_text = ", ".join(evening_exercises)
-            table[day]["Evening"] += f"\nExercises:\n{evening_exercise_text}\n"
-                
-                
-        
+            table[day]["Evening"] += f"Exercises: {evening_exercise_text}\n"
 
 
                 
