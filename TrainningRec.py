@@ -80,7 +80,7 @@ User Information:
 Available Exercises:
 {exercise_text}
 
-Now, based on the above information, provide some personalized training recommendations for the user. The output should be a JSON format sequences with keys: Name, Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5. Just json, no others things like tip or else.
+Now, based on the above information, provide some personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5, for each exercise, give a brief description for how to do it. Just json, also with "Reps", "Sets","Rest". no others things like tip or else.
 """
 
 
