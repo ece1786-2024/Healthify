@@ -420,7 +420,7 @@ profile_button = tk.Button(
     root, 
     text="My Profile", 
     font=("Helvetica", 12), 
-    bg="#6ba96b", 
+    bg="#6b8e23", 
     fg="white", 
     command=show_profile,
     relief="flat",
