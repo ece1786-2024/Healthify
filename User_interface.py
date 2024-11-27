@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-import User_profile
-from Recommendation_syn import diet_data, fitness_data, generate_diet_plan, generate_fitness_plan, combine_plan, to_dataframe
+from TrainningRec import Training_recommendation
+from Dietary_recommendation import Dietary_recommendation
+from Recommendation_syn import generate_diet_plan, generate_fitness_plan, combine_plan, to_dataframe
 import json
 import pandas as pd
 from openai import OpenAI
@@ -12,18 +13,6 @@ import os
 client = OpenAI(
     api_key = os.getenv('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'),
 )
-
-diet_plan = generate_diet_plan(diet_data)
-fitness_plan = generate_fitness_plan(fitness_data)
-combined_plan = combine_plan(diet_plan, fitness_plan)
-df_diet = to_dataframe(diet_plan, plan_type="Diet")
-df_fitness = to_dataframe(fitness_plan, plan_type="Fitness")
-df_combined = to_dataframe(combined_plan)
-
-print("diet plan")
-print(df_diet)
-
-
 
 ######################################
 ############ User Profile ############
@@ -88,7 +77,8 @@ def start_chat():
 def handle_chat():
     user_input = chat_input.get("1.0", tk.END).strip()
     if not user_input:
-        return
+        return None, None
+    
     chat_input.delete("1.0", tk.END)
     messages.append({"role": "user", "content": user_input})
     
@@ -145,15 +135,6 @@ def handle_chat():
         print("Extraction Result was:", extraction_result)
         pass  # Proceed to the next iteration
     
-    if len(collected_keys) == len(info_keys):
-        chat_display.config(state="normal")
-        chat_display.insert(tk.END, "Assistant: All information collected.\n")
-        chat_display.see(tk.END)
-        chat_display.config(state="disabled")
-        
-        #proceed to generate diet and fitness plan
-        return
-    
     response = client.chat.completions.create(
         model = "gpt-4o",
         messages = messages,
@@ -168,14 +149,19 @@ def handle_chat():
     chat_display.see(tk.END)
     chat_display.config(state="disabled")
 
+    if len(collected_keys) == len(info_keys):
+        chat_display.config(state="normal")
+        chat_display.insert(tk.END, "Assistant: All information collected.\n")
+        chat_display.see(tk.END)
+        chat_display.config(state="disabled")
         
-        
-####### End of User Profile ######### 
-#####################################
-        
-        
-        
-        
+        #proceed to generate diet and fitness plan
+        Training_rec = Training_recommendation(user_profile)
+        Dietary_rec = Dietary_recommendation(user_profile)
+        return Training_rec, Dietary_rec
+    
+    return None, None
+
 def show_profile():
     profile_window = tk.Toplevel(root)
     profile_window.title("Profile")
@@ -184,10 +170,10 @@ def show_profile():
     profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
     profile_display.insert(tk.END, json.dumps(user_profile, indent=2))
     profile_display.config(state="disabled")
-    profile_display.pack(pady=10)
-    
-    
-    
+    profile_display.pack(pady=10)        
+        
+####### End of User Profile ######### 
+#####################################                            
 
 def show_plan(table_data, title):
     plan_window = tk.Toplevel(root)
@@ -325,15 +311,9 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
             evening_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Evening", [])
             evening_exercise_text = ", ".join(evening_exercises)
             table[day]["Evening"] += f"Exercises: {evening_exercise_text}\n"
-
-
-                
-                        
+                    
     return table
-   
-    
-    
-     
+           
 
 def show_diet_plan():
     table_data = prepare_table_data(diet_plan=diet_plan)
@@ -407,13 +387,33 @@ chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black", fon
 chat_input.grid(row=2, column=0, sticky="ew", pady=10)
 
 def handle_enter(event):
-    handle_chat()
+    training_rec, dietary_rec = handle_chat()
+    if training_rec and dietary_rec:
+        # If training and dietary recommendations are available, use them
+        process_recommendations(training_rec, dietary_rec)
     return "break"
 chat_input.bind("<Return>", handle_enter)
 
+def process_recommendations(training_rec, dietary_rec):
+    global diet_plan, fitness_plan, combined_plan
+    diet_plan = generate_diet_plan(dietary_rec)
+    fitness_plan = generate_fitness_plan(training_rec)
+    combined_plan = combine_plan(diet_plan, fitness_plan)
+    chat_display.config(state="normal")
+    chat_display.insert(tk.END, "Assistant: Your fitness and diet plan are ready. You can view them from the menu.\n")
+    chat_display.see(tk.END)
+    chat_display.config(state="disabled") 
+
+chat_input.bind("<Return>", handle_enter)
+
 # sent button
-send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=handle_chat)
+send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=lambda: process_chat())
 send_button.grid(row=3, column=0, pady=10)
+
+def process_chat():
+    training_rec, dietary_rec = handle_chat()
+    if training_rec and dietary_rec:
+        process_recommendations(training_rec, dietary_rec)
 
 # profile button
 profile_button = tk.Button(
