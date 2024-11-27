@@ -7,6 +7,7 @@ import json
 import pandas as pd
 from openai import OpenAI
 import os
+import sqlite3
 
 
 client = OpenAI(
@@ -439,3 +440,41 @@ start_chat()
 # Run the application
 root.mainloop()
 
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(current_dir, "user_profiles.db")
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
+
+# Create the user_profiles table if it does not exist
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    age INTEGER,
+    gender TEXT,
+    height INTEGER,
+    weight INTEGER,
+    fitness_goal TEXT,
+    dietary_preference TEXT,
+    physical_activity_level TEXT,
+    health_restrictions TEXT,
+    dietary_restrictions TEXT
+)''')
+
+# Add the user profile to the database
+cursor.execute('''
+INSERT INTO user_profiles (
+    name, age, gender, height, weight, fitness_goal, dietary_preference,
+    physical_activity_level, health_restrictions, dietary_restrictions
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+''', (
+    user_profile['name'], user_profile['age'], user_profile['gender'], user_profile['height'], 
+    user_profile['weight'], user_profile['fitness goal'], user_profile['dietary preference'],
+    user_profile['current physical activity levels'], user_profile['health restrictions'],
+    user_profile['dietary restrictions']
+))
+
+# Commit and close the connection
+conn.commit()
+conn.close()
