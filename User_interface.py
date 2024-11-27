@@ -11,14 +11,18 @@ import os
 
 
 client = OpenAI(
-    api_key = os.getenv('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'),
+      api_key="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"
 )
+
 
 ######################################
 ############ User Profile ############
 # From here to the end of handle_chat function
 
-
+profile_window = None
+diet_plan_window = None
+fitness_plan_window = None
+timetable_window = None
 
 messages = [
         {"role": "system", 
@@ -163,14 +167,23 @@ def handle_chat():
     return None, None
 
 def show_profile():
-    profile_window = tk.Toplevel(root)
-    profile_window.title("Profile")
-    profile_window.geometry("400x400")
-    tk.Label(profile_window, text="Your Profile", font=("Helvetica", 16)).pack(pady=10)
-    profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
-    profile_display.insert(tk.END, json.dumps(user_profile, indent=2))
-    profile_display.config(state="disabled")
-    profile_display.pack(pady=10)        
+    global profile_window  # Refer to the global variable
+
+    if profile_window and profile_window.winfo_exists():
+        # If the profile window exists and is open, destroy it
+        profile_window.destroy()
+        profile_window = None
+    else:
+        # If the profile window is not open, create and show it
+        profile_window = tk.Toplevel(root)
+        profile_window.title("Profile")
+        profile_window.geometry("400x400")
+        tk.Label(profile_window, text="Your Profile", font=("Helvetica", 16)).pack(pady=10)
+
+        profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
+        profile_display.insert(tk.END, json.dumps(user_profile, indent=2))
+        profile_display.config(state="disabled")
+        profile_display.pack(pady=10)
         
 ####### End of User Profile ######### 
 #####################################                            
@@ -249,7 +262,8 @@ def show_plan(table_data, title):
         header_frame.grid_columnconfigure(i, weight=3)
     for i in range(total_rows):
         frame.grid_rowconfigure(i, weight=1)
-   
+        
+    return plan_window
      
     
 
@@ -316,18 +330,42 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
            
 
 def show_diet_plan():
-    table_data = prepare_table_data(diet_plan=diet_plan)
-    show_plan(table_data, "Diet Plan")
-    
-def show_fitness_plan():
-    table_data = prepare_table_data(fitness_plan=fitness_plan)
-    show_plan(table_data, "Fitness Plan")
-    
-def show_timetable():
-    table_data = prepare_table_data(diet_plan=diet_plan, fitness_plan=fitness_plan, combined_timetable=combined_plan)
-    show_plan(table_data, "Combined Timetable")
+    global diet_plan_window
+    if diet_plan_window is not None and diet_plan_window.winfo_exists():
+        # The window is open, so close it
+        diet_plan_window.destroy()
+        diet_plan_window = None
+    else:
+        # The window is not open, so open it
+        table_data = prepare_table_data(diet_plan=diet_plan)
+        diet_plan_window = show_plan(table_data, "Diet Plan")
 
-    
+def show_fitness_plan():
+    global fitness_plan_window
+    if fitness_plan_window is not None and fitness_plan_window.winfo_exists():
+        # The window is open, so close it
+        fitness_plan_window.destroy()
+        fitness_plan_window = None
+    else:
+        # The window is not open, so open it
+        table_data = prepare_table_data(fitness_plan=fitness_plan)
+        fitness_plan_window = show_plan(table_data, "Fitness Plan")
+
+def show_timetable():
+    global timetable_window
+    if timetable_window is not None and timetable_window.winfo_exists():
+        # The window is open, so close it
+        timetable_window.destroy()
+        timetable_window = None
+    else:
+        # The window is not open, so open it
+        table_data = prepare_table_data(
+            diet_plan=diet_plan, 
+            fitness_plan=fitness_plan, 
+            combined_timetable=combined_plan
+        )
+        timetable_window = show_plan(table_data, "Combined Timetable")
+
 
 # Function to show the slide menu
 def toggle_menu():
