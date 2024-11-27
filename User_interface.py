@@ -7,6 +7,7 @@ import json
 import pandas as pd
 from openai import OpenAI
 import os
+import sqlite3
 
 
 client = OpenAI(
@@ -36,7 +37,7 @@ messages = [
          "content":
             "You are a friendly fitness assistant, responsible for having a natural conversation with the user,"
             "Gradually collect the following information: name, age, gender, height, weight, fitness goals,"
-            "Dietary preference(Heart Health, Low Sugar, High Energy, General), Current physical activity level (low, normal, high), health restrictions, dietary restrictions."
+            "Dietary preference(Heart Health, Low Sugar, High Energy, General), Current physical activity level (beginner, intermediate, advanced), health restrictions, dietary restrictions."
             "If null is present, ask the question and respond appropriately based on the user's answer."
         }
 ]
@@ -101,16 +102,12 @@ def handle_chat():
         "As an AI assistant, extract any personal information provided from the user's response below. "
         "Include the following keys exactly as specified: "
         "'name', 'age', 'gender','height', 'weight', 'fitness goal', "
-        "'dietary preferences', 'current physical activity level, 'health restrictions', 'dietary restrictions'. "
-        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'Improved Endurance' if user wants to imrpove endurance, 'Stress Relief' if user wants to relieve stress, 'Heart Health' if user wants to improve heart health, 'null' if user does not provide any information."
-        "for dietary preference, mark as 'Heart Health' if user wants to improve heart health, 'Low Sugar' if user wants lower sugar intake, 'High Energy' if user wants to have high energy food, 'General', 'null' if user does not provide any information."
-        #"Map dietary preferences to one of the following: 'Heart Health', 'Low Sugar', 'High Energy', or 'General'. "
-        #"If the user's input is unclear, try to infer it or set it to 'unknown'. "
-        #"for dietary preference,  mark as 'Heart Health' if user input is heart health, 'Low Sugar' if user input is low sugar, 'High Energy' if user input is high energy, 'General' if user doesn't have any preference."
-        #"for dietary preference, mark as 'Heart Health', 'Low Sugar', 'High Energy', 'General', 'null' if user does not provide any information."
-        "mark current physical activity level as low if user is newbie, normal if User has light exercise, high if user ususally do exercise."
-        "for dietary restrictions, mark as 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten Free', 'Lactose Free', 'Nut Allergy', 'Shellfish Allergy', 'null' if user does not provide any information."
-        "If the user indicates that he does not know or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
+        "'dietary preference', 'current physical activity level, 'health restrictions', 'dietary restrictions'. "
+        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'Improved Endurance' if user wants to imrpove endurance, 'Relieve stress' if user wants to relieve stress, 'unknown' if user does not provide any information."
+        "for dietary preference(User want to eat), mark 'Heart Health': If the user prefers foods that improve heart health, mark 'Low Sugar': If the user prefers foods that lower sugar intake, mark 'High Energy': If the user prefers foods that provide high energy, mark 'General': If the user has no specific dietary requirements, mark 'Unknown': If the user has not provided any dietary preference information."
+        "mark current physical activity level as beginner if user is newbie, intermediate if User has light exercise, advanced if user ususally do exercise."
+        "For dietary restrictions(User can not eat), if the user does not provide any information, it is marked as 'unknown', if the user boycotts meat, it is marked as 'vegetarian', if the user does not eat other meat but fish, it is marked as 'pescatarian'."
+        "If the user indicates that he can not give or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
         "Please output the new information in JSON format, without explanation or additional text. "
         "If a piece of information is not provided, do not include it in the JSON."
         "\n\nUser's reply:\n"
@@ -123,7 +120,7 @@ def handle_chat():
                 {"role": "system", "content": extraction_prompt}
             ],
             max_tokens= 150,
-            temperature= 0,
+            temperature= 0.7,
         )
     
     extraction_result = extraction_response.choices[0].message.content.strip()
@@ -424,7 +421,7 @@ profile_button = tk.Button(
     root, 
     text="My Profile", 
     font=("Helvetica", 12), 
-    bg="#6ba96b", 
+    bg="#6b8e23", 
     fg="white", 
     command=show_profile,
     relief="flat",
@@ -443,3 +440,41 @@ start_chat()
 # Run the application
 root.mainloop()
 
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(current_dir, "user_profiles.db")
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
+
+# Create the user_profiles table if it does not exist
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    age INTEGER,
+    gender TEXT,
+    height INTEGER,
+    weight INTEGER,
+    fitness_goal TEXT,
+    dietary_preference TEXT,
+    physical_activity_level TEXT,
+    health_restrictions TEXT,
+    dietary_restrictions TEXT
+)''')
+
+# Add the user profile to the database
+cursor.execute('''
+INSERT INTO user_profiles (
+    name, age, gender, height, weight, fitness_goal, dietary_preference,
+    physical_activity_level, health_restrictions, dietary_restrictions
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+''', (
+    user_profile['name'], user_profile['age'], user_profile['gender'], user_profile['height'], 
+    user_profile['weight'], user_profile['fitness goal'], user_profile['dietary preference'],
+    user_profile['current physical activity levels'], user_profile['health restrictions'],
+    user_profile['dietary restrictions']
+))
+
+# Commit and close the connection
+conn.commit()
+conn.close()
