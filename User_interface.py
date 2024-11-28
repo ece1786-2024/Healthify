@@ -10,6 +10,7 @@ import os
 import sqlite3
 
 
+
 client = OpenAI(
     api_key = os.getenv('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'),
 )
@@ -181,8 +182,8 @@ def show_profile():
     profile_window = tk.Toplevel(root)
     profile_window.title("Profile")
     profile_window.geometry("400x400")
-    tk.Label(profile_window, text="Your Profile", font=("Helvetica", 16)).pack(pady=10)
-    profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
+    tk.Label(profile_window, text="Your Profile", font=("Arial", 16)).pack(pady=10)
+    profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50, bg="#a3ffc6", fg = "black", font=("Arial", 12))
     profile_display.insert(tk.END, json.dumps(user_profile, indent=2))
     profile_display.config(state="disabled")
     profile_display.pack(pady=10)
@@ -195,6 +196,7 @@ def show_plan(table_data, title):
     plan_window.title(title)
     
     plan_window.geometry("1200x800")
+    plan_window.configure(bg="#f0f4f7")
     plan_window.resizable(True, True)
     
     canvas = tk.Canvas(plan_window, bg="#e6f7d1")
@@ -225,7 +227,7 @@ def show_plan(table_data, title):
         label = tk.Label(
             header_frame, 
             text=day, 
-            font=("Helvetica", 15), 
+            font=("Arial", 15), 
             width=25, 
             bg="#6ba96b",
             fg="white",
@@ -238,7 +240,7 @@ def show_plan(table_data, title):
         label = tk.Label(
             frame,
             text=time_of_day, 
-            font=("Helvetica", 18, "bold"), 
+            font=("Arial", 18, "bold"), 
             width=15,
             bg="#556b2f", 
             fg="white",
@@ -250,7 +252,7 @@ def show_plan(table_data, title):
             label = tk.Label(
                 frame, 
                 text=data, 
-                font=("Helvetica", 12), 
+                font=("Arial", 12), 
                 bg="#e6f7d1", 
                 anchor="w", 
                 wraplength=150, 
@@ -374,7 +376,7 @@ slide_menu = tk.Frame(root, width=200, bg="#6ba96b", height=500)
 slide_menu.grid(row=0, column=0, rowspan=3, sticky="ns")
 slide_menu.grid_remove()  # Initially hidden
 
-menu_button_style = {"font": ("Helvetica", 12), "bg": "#6b8e23", "fg": "white", "relief": "flat"}
+menu_button_style = {"font": ("Arial", 12), "bg": "#6b8e23", "fg": "white", "relief": "raised", "bd": 2}
 tk.Button(slide_menu, text="My Diet Plan", **menu_button_style, command=show_diet_plan).pack(pady=15, padx=10, fill="x")
 tk.Button(slide_menu, text="My Fitness Plan", **menu_button_style, command=show_fitness_plan).pack(pady=15, padx=10, fill="x")
 tk.Button(slide_menu, text="My Timetable", **menu_button_style, command=show_timetable).pack(pady=15, padx=10, fill="x")
@@ -383,7 +385,7 @@ tk.Button(slide_menu, text="My Timetable", **menu_button_style, command=show_tim
 header = tk.Frame(root, bg="#e6f7d1")
 header.grid(row=0, column=1, sticky="ew")
 
-menu_button = tk.Button(header, text="☰", font=("Helvetica", 15), bg="#e6f7d1", relief="flat", command=toggle_menu)
+menu_button = tk.Button(header, text="☰", font=("Arial", 15), bg="#e6f7d1", relief="flat", command=toggle_menu)
 menu_button.pack(side="left", padx=10)
 
 # Main chat frame
@@ -392,19 +394,20 @@ chat_frame.grid(row=1, column=1, sticky="nsew")
 chat_frame.grid_rowconfigure(0, weight=0)  
 chat_frame.grid_rowconfigure(1, weight=1)
 chat_frame.grid_rowconfigure(2, weight=0)
-chat_frame.grid_rowconfigure(3, weight=0)
-chat_frame.grid_columnconfigure(0, weight=1)  
+#chat_frame.grid_rowconfigure(3, weight=0)
+chat_frame.grid_columnconfigure(0, weight=1)
+chat_frame.grid_columnconfigure(1, weight=0)  
 
 # welcome message
-welcome_label = tk.Label(chat_frame, text="Welcome to Healthify!", font=("Helvetica", 20), bg="#e6f7d1", fg="#6ba96b")
-welcome_label.grid(row=0, column=0, pady=10)
+welcome_label = tk.Label(chat_frame, text="Welcome to Healthify!", font=("Arial", 20), bg="#e6f7d1", fg="#6ba96b")
+welcome_label.grid(row=0, column=0, pady=10, columnspan=2)
 
 # chat display
-chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="disabled", bg="#f7f7f7", fg="black", font=("Helvetica", 15))
-chat_display.grid(row=1, column=0, sticky="nsew", pady=10)
+chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="disabled", bg="#f7f7f7", fg="black", font=("Arial", 15), relief="groove", bd=2)
+chat_display.grid(row=1, column=0, sticky="nsew", pady=10, columnspan=2)
 
 # Input bot for chat
-chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black", font=("Helvetica", 15))
+chat_input = tk.Text(chat_frame, height=0.95, width=70, bg="white", fg="black", font=("Arial", 15), relief="groove", bd=2)
 chat_input.grid(row=2, column=0, sticky="ew", pady=10)
 
 def handle_enter(event):
@@ -413,19 +416,19 @@ def handle_enter(event):
 chat_input.bind("<Return>", handle_enter)
 
 # sent button
-send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=handle_chat)
-send_button.grid(row=3, column=0, pady=10)
+send_button = tk.Button(chat_frame, text="Send", font=("Arial", 12), bg="#6ba96b", fg="white", command=handle_chat, relief="raised", bd=2)
+send_button.grid(row=2, column=1, pady=10, padx=5, sticky="e")
 
 # profile button
 profile_button = tk.Button(
     root, 
     text="My Profile", 
-    font=("Helvetica", 12), 
+    font=("Arial", 12), 
     bg="#6b8e23", 
     fg="white", 
     command=show_profile,
-    relief="flat",
-    anchor="center"
+    relief="raised",
+    bd=2
     )
 profile_button.grid(row=2, column=0, pady=10, sticky="sw")
 
