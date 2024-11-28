@@ -82,11 +82,11 @@ def Training_recommendation(user_inputs):
 
 # Map the user's physical activity level to the dataset's 'Level'
 def map_experience_level(physical_activity_level):
-    if 'beginner' in physical_activity_level.lower():
+    if 'beginner' in physical_activity_level.lower() and not None:
         return 'Beginner'
-    elif 'intermediate' in physical_activity_level.lower():
+    elif 'intermediate' in physical_activity_level.lower() and not None:
         return 'Intermediate'
-    elif 'advanced' in physical_activity_level.lower():
+    elif 'advanced' in physical_activity_level.lower() and not None:
         return 'Advanced'
     else:
         return 'Beginner'  # Default to 'Beginner'
