@@ -552,10 +552,10 @@ profile_button = tk.Button(
     fg="white", 
     command=show_profile,
     relief="raised",
-    bd=2,
-    padx=10
+    bd=2
+    
     )
-profile_button.grid(row=2, column=0, pady=10, sticky="sw")
+profile_button.grid(row=2, column=0, pady=20, padx=20, sticky="sw")
 
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(1, weight=1)
