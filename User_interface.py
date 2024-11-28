@@ -1,28 +1,45 @@
+# User_interface.py
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from TrainningRec import Training_recommendation
 from Dietary_recommendation import Dietary_recommendation
-from Recommendation_syn import generate_diet_plan, generate_fitness_plan, combine_plan, to_dataframe
+from Recommendation_syn import generate_diet_plan, generate_fitness_plan, combine_plan, adjust_daily_progress, to_dataframe
 import json
 import pandas as pd
 from openai import OpenAI
 import os
 
-
 client = OpenAI(
-      api_key="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"
+      api_key="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"
 )
-
 
 ######################################
 ############ User Profile ############
-# From here to the end of handle_chat function
 
 profile_window = None
 diet_plan_window = None
 fitness_plan_window = None
 timetable_window = None
+
+diet_plan = {}
+fitness_plan = {}
+combined_plan = {}
+
+# Define the calories_week data
+calories_week = {
+    "Monday": {"Calorie intake": 2500, "calories burned (exercise)": 0},
+    "Tuesday": {"Calorie intake": 1800, "calories burned (exercise)": 1200},
+    "Wednesday": {"Calorie intake": 2300, "calories burned (exercise)": 1300},
+    "Thursday": {"Calorie intake": 2100, "calories burned (exercise)": 0},
+    "Friday": {"Calorie intake": 1700, "calories burned (exercise)": 1100},
+    "Saturday": {"Calorie intake": 1800, "calories burned (exercise)": 1200},
+    "Sunday": {"Calorie intake": 2700, "calories burned (exercise)": 0},
+}
+
+# List of days from today (Tuesday) until next Monday
+days = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday"]
 
 messages = [
         {"role": "system", 
@@ -62,13 +79,12 @@ info_keys = {
 
 collected_keys = set()
 
-
 def start_chat():
     response = client.chat.completions.create(
         model = "gpt-4o",
         messages = messages,
         max_tokens = 150,
-        temperature = 0.7,
+        temperature = 1.0,
     )
 
     assistant_message = response.choices[0].message.content.strip()
@@ -92,19 +108,44 @@ def handle_chat():
     chat_display.config(state="disabled")
     
     extraction_prompt = (
-        "As an AI assistant, extract any personal information provided from the user's response below. "
-        "Include the following keys exactly as specified: "
-        "'name', 'age', 'gender','height', 'weight', 'fitness goal', "
-        "'dietary preference', 'current physical activity level, 'health restrictions', 'dietary restrictions'. "
-        "for fitness goal, mark as 'Weight Loss' if user wants to lose weight, 'Muscle Gain' if user wants to gain muscle, 'Improved Endurance' if user wants to imrpove endurance, 'Relieve stress' if user wants to relieve stress, 'unknown' if user does not provide any information."
-        "for dietary preference(User want to eat), mark 'Heart Health': If the user prefers foods that improve heart health, mark 'Low Sugar': If the user prefers foods that lower sugar intake, mark 'High Energy': If the user prefers foods that provide high energy, mark 'General': If the user has no specific dietary requirements, mark 'Unknown': If the user has not provided any dietary preference information."
-        "mark current physical activity level as beginner if user is newbie, intermediate if User has light exercise, advanced if user ususally do exercise."
-        "For dietary restrictions(User can not eat), if the user does not provide any information, it is marked as 'unknown', if the user boycotts meat, it is marked as 'vegetarian', if the user does not eat other meat but fish, it is marked as 'pescatarian'."
-        "If the user indicates that he can not give or is unwilling to provide any of this information for exactly key, set the corresponding value to 'unknown'."
-        "Please output the new information in JSON format, without explanation or additional text. "
-        "If a piece of information is not provided, do not include it in the JSON."
+        " As an AI assistant, extract personal information provided from the user's response. "
+        " The following keys need to collect information:"  
+        " 'name(The user name is a combination of letters)', 'age', 'gender', 'height', 'weight', 'fitness goal', 'dietary preference', " 
+        " 'current physical activity level', 'health restrictions', 'dietary restrictions'."  
+
+        " Rules:" 
+        " 1. For 'fitness goal':" 
+        " - Mark as 'Weight Loss' if the user wants to lose weight." 
+        " - Mark as 'Muscle Gain' if the user wants to gain muscle." 
+        " - Mark as 'Improved Endurance' if the user wants to improve endurance." 
+        " - Mark as 'Relieve Stress' if the user wants to relieve stress." 
+        " - Mark as 'General' if the user has no specific fitness goal."
+
+        " 2. For 'dietary preference' (what the user prefers to eat):" 
+        " - Mark 'Heart Health' if the user prefers foods that improve heart health." 
+        " - Mark 'Low Sugar' if the user prefers foods that lower sugar intake." 
+        " - Mark 'High Energy' if the user prefers foods that provide high energy." 
+        " - Mark 'General' if the user has no specific dietary requirements." 
+      
+
+        " 3. For 'current physical activity level':" 
+        " - Mark 'beginner' if the user is new to exercise." 
+        " - Mark 'intermediate' if the user engages in light exercise." 
+        " - Mark 'advanced' if the user exercises regularly." 
+
+        " Input: "
         "\n\nUser's reply:\n"
         f"\"\"\"\n{user_input}\n\"\"\""
+
+        "\n\nUser's profile:\n"
+        f"\"\"\"\n{user_profile}\n\"\"\""
+
+        " Output:" 
+        " - Provide the updated user profile in JSON format." 
+        " - If a piece of information is not provided, do not include it in the JSON." 
+
+        " Process:" 
+        " - check the user's profile before ask the user questions if any missing or null values in the user's profile, ask until get information or mark 'unkown'." 
     )
     
     extraction_response = client.chat.completions.create(
@@ -113,7 +154,7 @@ def handle_chat():
                 {"role": "system", "content": extraction_prompt}
             ],
             max_tokens= 150,
-            temperature= 0.7,
+            temperature= 1.0,
         )
     
     extraction_result = extraction_response.choices[0].message.content.strip()
@@ -146,10 +187,10 @@ def handle_chat():
         temperature = 0.7,
     )
     
-    assitant_message = response.choices[0].message.content.strip()
-    messages.append({"role": "assistant", "content": assitant_message})
+    assistant_message = response.choices[0].message.content.strip()
+    messages.append({"role": "assistant", "content": assistant_message})
     chat_display.config(state="normal")
-    chat_display.insert(tk.END, f"Assistant: {assitant_message}\n")
+    chat_display.insert(tk.END, f"Assistant: {assistant_message}\n")
     chat_display.see(tk.END)
     chat_display.config(state="disabled")
 
@@ -159,12 +200,29 @@ def handle_chat():
         chat_display.see(tk.END)
         chat_display.config(state="disabled")
         
-        #proceed to generate diet and fitness plan
-        Training_rec = Training_recommendation(user_profile)
-        Dietary_rec = Dietary_recommendation(user_profile)
-        return Training_rec, Dietary_rec
-    
-    return None, None
+        # Proceed to generate diet and fitness plan
+        training_rec = Training_recommendation(user_profile)
+        dietary_rec = Dietary_recommendation(user_profile)
+        # Now proceed to simulate the days
+        previous_day = "Monday"  # Assuming previous day is Monday
+        for day in days:
+            # Adjust the plans based on previous day's data
+            process_recommendations(
+                training_rec,
+                dietary_rec,
+                day=day,
+                previous_day=previous_day,
+                calories_week=calories_week
+            )
+            # Update the previous day
+            previous_day = day
+            # Update the GUI
+            root.update()
+        # After simulating the days, inform the user
+        chat_display.config(state="normal")
+        chat_display.insert(tk.END, "Assistant: Your plans have been generated.\n")
+        chat_display.see(tk.END)
+        chat_display.config(state="disabled")        
 
 def show_profile():
     global profile_window  # Refer to the global variable
@@ -265,19 +323,17 @@ def show_plan(table_data, title):
         
     return plan_window
      
-    
 
 def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=None):
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     table = {day: {"Morning": "", "Noon": "", "Evening": ""} for day in days}
-        
         
     for day in days:
         table[day]["Morning"] = ""
         table[day]["Noon"] = ""
         table[day]["Evening"] = ""
         
-        if diet_plan and not combined_timetable:
+        if diet_plan is not None and combined_timetable is None:
             morning_diet = diet_plan.get(day, {}).get("Morning", [])
             if morning_diet:
                 formatted_morning = "\n".join(morning_diet)
@@ -293,17 +349,17 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                 formatted_evening = "\n".join(evening_diet)
                 table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
                         
-        if fitness_plan and not combined_timetable:
+        if fitness_plan is not None and combined_timetable is None:
             exercises = fitness_plan.get(day, {})
             morning_exercises = exercises.get("Morning", [])
             evening_exercises = exercises.get("Evening", [])
-            morning_exercises_text = ",".join(morning_exercises)
-            evening_exercises_text = ",".join(evening_exercises)
+            morning_exercises_text = ", ".join(morning_exercises)
+            evening_exercises_text = ", ".join(evening_exercises)
             table[day]["Morning"] += f"Exercises:\n{morning_exercises_text}\n"
             table[day]["Evening"] += f"Exercises:\n{evening_exercises_text}\n"
                 
                 
-        if combined_timetable:
+        if combined_timetable is not None:
             morning_diet = diet_plan.get(day, {}).get("Morning", [])
             if morning_diet:
                 formatted_morning = "\n".join(morning_diet)
@@ -330,42 +386,16 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
            
 
 def show_diet_plan():
-    global diet_plan_window
-    if diet_plan_window is not None and diet_plan_window.winfo_exists():
-        # The window is open, so close it
-        diet_plan_window.destroy()
-        diet_plan_window = None
-    else:
-        # The window is not open, so open it
-        table_data = prepare_table_data(diet_plan=diet_plan)
-        diet_plan_window = show_plan(table_data, "Diet Plan")
-
+    table_data = prepare_table_data(diet_plan=diet_plan)
+    show_plan(table_data, "Diet Plan")
+    
 def show_fitness_plan():
-    global fitness_plan_window
-    if fitness_plan_window is not None and fitness_plan_window.winfo_exists():
-        # The window is open, so close it
-        fitness_plan_window.destroy()
-        fitness_plan_window = None
-    else:
-        # The window is not open, so open it
-        table_data = prepare_table_data(fitness_plan=fitness_plan)
-        fitness_plan_window = show_plan(table_data, "Fitness Plan")
-
+    table_data = prepare_table_data(fitness_plan=fitness_plan)
+    show_plan(table_data, "Fitness Plan")
+    
 def show_timetable():
-    global timetable_window
-    if timetable_window is not None and timetable_window.winfo_exists():
-        # The window is open, so close it
-        timetable_window.destroy()
-        timetable_window = None
-    else:
-        # The window is not open, so open it
-        table_data = prepare_table_data(
-            diet_plan=diet_plan, 
-            fitness_plan=fitness_plan, 
-            combined_timetable=combined_plan
-        )
-        timetable_window = show_plan(table_data, "Combined Timetable")
-
+    table_data = prepare_table_data(diet_plan=diet_plan, fitness_plan=fitness_plan, combined_timetable=combined_plan)
+    show_plan(table_data, "Combined Timetable")
 
 # Function to show the slide menu
 def toggle_menu():
@@ -374,17 +404,14 @@ def toggle_menu():
     else:
         slide_menu.grid()
 
-
 # Main window setup
 root = tk.Tk()
 root.title("Healthify")
 root.geometry("800x600")
 root.configure(bg="#e6f7d1")
 
-
 root.grid_rowconfigure(1, weight=1) 
 root.grid_columnconfigure(1, weight=1)  
-
 
 # Slide menu
 slide_menu = tk.Frame(root, width=200, bg="#6ba96b", height=500)
@@ -420,40 +447,51 @@ welcome_label.grid(row=0, column=0, pady=10)
 chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="disabled", bg="#f7f7f7", fg="black", font=("Helvetica", 15))
 chat_display.grid(row=1, column=0, sticky="nsew", pady=10)
 
-# Input bot for chat
+# Input box for chat
 chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black", font=("Helvetica", 15))
 chat_input.grid(row=2, column=0, sticky="ew", pady=10)
 
 def handle_enter(event):
-    training_rec, dietary_rec = handle_chat()
-    if training_rec and dietary_rec:
-        # If training and dietary recommendations are available, use them
-        process_recommendations(training_rec, dietary_rec)
+    handle_chat()
     return "break"
+
 chat_input.bind("<Return>", handle_enter)
 
-def process_recommendations(training_rec, dietary_rec):
+def process_recommendations(training_rec, dietary_rec, day=None, previous_day=None, calories_week=None):
     global diet_plan, fitness_plan, combined_plan
-    diet_plan = generate_diet_plan(dietary_rec)
-    fitness_plan = generate_fitness_plan(training_rec)
-    combined_plan = combine_plan(diet_plan, fitness_plan)
+
+    # Plan adjustment based on previous day
+    diet_plan_raw = generate_diet_plan(day, dietary_rec)
+    fitness_plan_raw = generate_fitness_plan(day, training_rec)
+    adjusted_exercise_plan, adjusted_diet_plan = adjust_daily_progress(
+        day,
+        previous_day,
+        calories_week,
+        diet_plan_raw,
+        fitness_plan_raw,
+    )
+
+    # Update the global plans with adjusted plans for the day
+    diet_plan[day] = adjusted_diet_plan
+    fitness_plan[day] = adjusted_exercise_plan
+    combined_plan[day] = combine_plan(adjusted_diet_plan, adjusted_exercise_plan)
+
+    # Display the adjusted plans
     chat_display.config(state="normal")
-    chat_display.insert(tk.END, "Assistant: Your fitness and diet plan are ready. You can view them from the menu.\n")
+    chat_display.insert(tk.END, f"\nAssistant: Here is your adjusted plan for {day}:\n")    
+    chat_display.insert(tk.END, f"Diet Plan for {day} is complete. \n")
+    chat_display.insert(tk.END, f"Fitness Plan for {day} is complete. \n")
     chat_display.see(tk.END)
-    chat_display.config(state="disabled") 
+    chat_display.config(state="disabled")
 
-chat_input.bind("<Return>", handle_enter)
-
-# sent button
+# Send button
 send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=lambda: process_chat())
 send_button.grid(row=3, column=0, pady=10)
 
 def process_chat():
-    training_rec, dietary_rec = handle_chat()
-    if training_rec and dietary_rec:
-        process_recommendations(training_rec, dietary_rec)
+    handle_chat()
 
-# profile button
+# Profile button
 profile_button = tk.Button(
     root, 
     text="My Profile", 
@@ -466,10 +504,8 @@ profile_button = tk.Button(
     )
 profile_button.grid(row=2, column=0, pady=10, sticky="sw")
 
-
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(1, weight=1)
-
 
 # Start the chat
 start_chat()
@@ -477,3 +513,17 @@ start_chat()
 # Run the application
 root.mainloop()
 
+__all__ = [
+    "root",
+    "start_chat",
+    "process_recommendations",
+    "Training_recommendation",
+    "Dietary_recommendation",
+    "user_profile",
+    "collected_keys",
+    "info_keys",
+    "chat_display",
+    "diet_plan",
+    "fitness_plan",
+    "combined_plan"
+]
