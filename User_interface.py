@@ -14,7 +14,7 @@ import sqlite3
 
 
 client = OpenAI(
-      api_key="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"
+      api_key="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"
 )
 
 ######################################
@@ -116,24 +116,40 @@ def handle_chat():
         " 'current physical activity level', 'health restrictions', 'dietary restrictions'."  
 
         " Rules:" 
-        " 1. For 'fitness goal':" 
+        " 1. For 'height':"
+        " - The height should be in centimeters, not including the unit."
+        " - If the height is in feet and inches, convert it to centimeters."
+
+        " 2. For 'weight':"
+        " - The weight should be in kilograms, not including the unit."
+        " - If the weight is in pounds, convert it to kilograms."
+
+        " 3. For 'fitness goal':" 
         " - Mark as 'Weight Loss' if the user wants to lose weight." 
         " - Mark as 'Muscle Gain' if the user wants to gain muscle." 
         " - Mark as 'Improved Endurance' if the user wants to improve endurance." 
         " - Mark as 'Relieve Stress' if the user wants to relieve stress." 
         " - Mark as 'General' if the user has no specific fitness goal."
+        " - If the user has multiple fitness goals, mark the first one."
 
-        " 2. For 'dietary preference' (what the user prefers to eat):" 
+        " 4. For 'dietary preference' (what the user prefers to eat):" 
         " - Mark 'Heart Health' if the user prefers foods that improve heart health." 
         " - Mark 'Low Sugar' if the user prefers foods that lower sugar intake." 
         " - Mark 'High Energy' if the user prefers foods that provide high energy." 
         " - Mark 'General' if the user has no specific dietary requirements." 
+        " - If the user has multiple dietary preferences, mark the first one."
       
-
-        " 3. For 'current physical activity level':" 
+        " 5. For 'current physical activity level':" 
         " - Mark 'beginner' if the user is new to exercise." 
         " - Mark 'intermediate' if the user engages in light exercise." 
         " - Mark 'advanced' if the user exercises regularly." 
+        " - If the user gives vague information, as more probing questions until the user gives clear reply."
+
+        " 6. For 'health restrictions':"
+        " - If the user mentions any particular health restrictions or body parts, mark them."
+
+        " 7. For 'dietary restrictions':"
+        " - If the user mentions any particular dietary restrictions or certain ingredients and foods, mark them."
 
         " Input: "
         "\n\nUser's reply:\n"

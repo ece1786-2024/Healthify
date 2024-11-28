@@ -21,6 +21,8 @@ def generate_diet_plan(day, diet_data):
 
         Ensure that:
         - The combinations are varied and nutritionally balanced.
+        - One recipe should only appear once in the plan.
+        - The recipe must be distinct from the previous day's plan.
         - The instructions are simple enough for a home cook.
         - The format strictly adheres to JSON, without any code fences, explanations, or additional text.
 
