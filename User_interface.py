@@ -253,13 +253,45 @@ def show_profile():
         # If the profile window is not open, create and show it
         profile_window = tk.Toplevel(root)
         profile_window.title("Profile")
-        profile_window.geometry("400x400")
-        tk.Label(profile_window, text="Your Profile", font=("Helvetica", 16)).pack(pady=10)
+        profile_window.geometry("500x400")
+        profile_window.configure(bg="#e6f7d1")
+        profile_window.resizable(True, True)
+        
+        user_name = user_profile.get("name")
+        if user_name is None:
+            user_name = "User"
+        tk.Label(profile_window, text=f"Hi {user_name}!", font=("Arial", 20, "bold"), bg="#e6f7d1").pack(pady=10)
 
-        profile_display = tk.Text(profile_window, wrap=tk.WORD, height=15, width=50)
-        profile_display.insert(tk.END, json.dumps(user_profile, indent=2))
-        profile_display.config(state="disabled")
-        profile_display.pack(pady=10)
+        details_frame = tk.Frame(profile_window, bg="#e6f7d1")
+        details_frame.pack(pady=10, padx=20, fill="both", expand=True)
+        
+        details = [
+            ("Age", user_profile.get("age")),
+            ("Gender", user_profile.get("gender")),
+            ("Height", user_profile.get("height")),
+            ("Weight", user_profile.get("weight")),
+            ("Fitness Goal", user_profile.get("fitness goal")),
+            ("Dietary Preference", user_profile.get("dietary preference")),
+            ("Physical Activity Level", user_profile.get("current physical activity levels")),
+            ("Health Restrictions", user_profile.get("health restrictions")),
+            ("Dietary Restrictions", user_profile.get("dietary restrictions")),
+        ]
+        
+        for i, (label, value) in enumerate(details):
+            if value is None:
+                value = "You haven't enter this information"
+            tk.Label(details_frame, 
+                     text=f"{label}:", 
+                     font=("Arial", 13), 
+                     anchor="w", 
+                     bg="#e6f7d1").grid(row=i, column=0, sticky="w", pady=5)
+            value_label = tk.Label(details_frame, 
+                     text=f"{value}", 
+                     font=("Arial", 13),
+                     bg="#e6f7d1",
+                     wraplength=300,
+                     justify="left")
+            value_label.grid(row=i, column=1, sticky="w", pady=5)
         
 ####### End of User Profile ######### 
 #####################################                            
@@ -468,7 +500,7 @@ chat_display = tk.Text(chat_frame, wrap=tk.WORD, height=20, width=70, state="dis
 chat_display.grid(row=1, column=0, sticky="nsew", pady=10, columnspan=2)
 
 # Input box for chat
-chat_input = tk.Text(chat_frame, height=3, width=70, bg="white", fg="black", font=("Helvetica", 15))
+chat_input = tk.Text(chat_frame, height=1, width=70, bg="white", fg="black", font=("Helvetica", 15))
 chat_input.grid(row=2, column=0, sticky="ew", pady=10)
 
 def handle_enter(event):
@@ -506,7 +538,7 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
 
 # Send button
 send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=lambda: process_chat())
-send_button.grid(row=3, column=0, pady=10)
+send_button.grid(row=2, column=1, pady=5, padx=5, sticky="e")
 
 def process_chat():
     handle_chat()
@@ -520,7 +552,8 @@ profile_button = tk.Button(
     fg="white", 
     command=show_profile,
     relief="raised",
-    bd=2
+    bd=2,
+    padx=10
     )
 profile_button.grid(row=2, column=0, pady=10, sticky="sw")
 
