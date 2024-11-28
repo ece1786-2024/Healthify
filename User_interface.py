@@ -11,6 +11,7 @@ import pandas as pd
 from openai import OpenAI
 import os
 import sqlite3
+import threading
 
 
 client = OpenAI(
@@ -147,9 +148,13 @@ def handle_chat():
 
         " 6. For 'health restrictions':"
         " - If the user mentions any particular health restrictions or body parts, mark them."
+        "- If the user says 'no', 'none', 'no restrictions', or similar, mark 'No Restrictions'."
 
         " 7. For 'dietary restrictions':"
         " - If the user mentions any particular dietary restrictions or certain ingredients and foods, mark them."
+        "- If the user says 'no', 'none', 'no restrictions', or similar, mark 'No Restrictions'."
+
+        "8. If the user's response is irrelevant or nonsensical for the requested information, do not update the profile for that key and indicate that the information is still missing."
 
         " Input: "
         "\n\nUser's reply:\n"
@@ -163,17 +168,23 @@ def handle_chat():
         " - If a piece of information is not provided, do not include it in the JSON." 
 
         " Process:" 
-        " - check the user's profile before ask the user questions if any missing or null values in the user's profile, ask until get information or mark 'unkown'." 
+        "- Check the user's profile for any missing or null values."
+        "- For each missing key, if the user's reply provides valid information, update the profile."
+        "- If the user's reply indicates 'no' or 'none' for 'health restrictions' or 'dietary restrictions', mark 'No Restrictions' for that key."
+        "- If the user's reply is irrelevant or nonsensical for the requested information, do not update the profile for that key."
     )
-    
-    extraction_response = client.chat.completions.create(
-            model = "gpt-4o",
-            messages=[
-                {"role": "system", "content": extraction_prompt}
-            ],
-            max_tokens= 150,
-            temperature= 1.0,
-        )
+    try:
+        extraction_response = client.chat.completions.create(
+                model = "gpt-4o",
+                messages=[
+                    {"role": "system", "content": extraction_prompt}
+                ],
+                max_tokens= 150,
+                temperature= 1.0,
+            )
+    except Exception as e:
+        print("OpenAI API call failed:", e)
+        return 
     
     extraction_result = extraction_response.choices[0].message.content.strip()
     
@@ -188,6 +199,7 @@ def handle_chat():
     # Try to parse the JSON and update user_profile
     try:
         new_info = json.loads(extraction_result_cleaned)
+        print("New info:", new_info)
         for key, value in new_info.items():
             key_lower = key.lower()
             if key_lower in info_keys:
@@ -198,12 +210,16 @@ def handle_chat():
         print("Extraction Result was:", extraction_result)
         pass  # Proceed to the next iteration
     
-    response = client.chat.completions.create(
-        model = "gpt-4o",
-        messages = messages,
-        max_tokens = 150,
-        temperature = 0.7,
-    )
+    try:
+        response = client.chat.completions.create(
+            model = "gpt-4o",
+            messages = messages,
+            max_tokens = 150,
+            temperature = 0.7,
+        )
+    except Exception as e:
+        print("OpenAI API call failed:", e)
+        return
     
     assistant_message = response.choices[0].message.content.strip()
     messages.append({"role": "assistant", "content": assistant_message})
@@ -212,13 +228,18 @@ def handle_chat():
     chat_display.see(tk.END)
     chat_display.config(state="disabled")
 
-    if len(collected_keys) == len(info_keys):
+    missing_info = [key for key, value in user_profile.items() if value is None]
+    print("current user profile:", user_profile)    
+    print("Missing info:", missing_info)
+    
+    if not missing_info:
         chat_display.config(state="normal")
-        chat_display.insert(tk.END, "Assistant: All information collected.\n")
+        chat_display.insert(tk.END, "Assistant: All information collected.\n Please wait a few seconds while I generate your plans.\n")
         chat_display.see(tk.END)
         chat_display.config(state="disabled")
+        threading.Thread(target=generate_plans).start()
         
-        # Proceed to generate diet and fitness plan
+        """# Proceed to generate diet and fitness plan
         training_rec = Training_recommendation(user_profile)
         dietary_rec = Dietary_recommendation(user_profile)
         # Now proceed to simulate the days
@@ -240,7 +261,34 @@ def handle_chat():
         chat_display.config(state="normal")
         chat_display.insert(tk.END, "Assistant: Your plans have been generated.\n")
         chat_display.see(tk.END)
-        chat_display.config(state="disabled")        
+        chat_display.config(state="disabled")    """    
+    else:
+        chat_display.config(state="normal")
+        chat_display.see(tk.END)
+        chat_display.config(state="disabled")
+        
+def generate_plans():
+    training_rec = Training_recommendation(user_profile)
+    dietary_rec = Dietary_recommendation(user_profile)
+    previous_day = "Monday"  # Assuming previous day is Monday
+    for day in days:
+        # Adjust the plans based on previous day's data
+        process_recommendations(
+            training_rec,
+            dietary_rec,
+            day=day,
+            previous_day=previous_day,
+            calories_week=calories_week
+        )
+        # Update the previous day
+        previous_day = day
+        # Update the GUI
+        root.update()
+        # After simulating the days, inform the user
+    chat_display.config(state="normal")
+    chat_display.insert(tk.END, "Assistant: Your plans have been generated.\n")
+    chat_display.see(tk.END)
+    chat_display.config(state="disabled")        
 
 def show_profile():
     global profile_window  # Refer to the global variable
