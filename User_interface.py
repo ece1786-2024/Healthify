@@ -47,7 +47,9 @@ days = ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Mon
 messages = [
         {"role": "system", 
          "content":
-            "You are a friendly fitness assistant, responsible for having a natural conversation with the user,"
+            "You are a friendly fitness assistant, responsible for having a natural conversation with the user in the soft way,"
+            "The tone of asking questions should not be very strong, and make user feel comfortable and friendly. Give respectful to the user."
+            "If user feel sad or unhappy, try to make them happy and encourge them."
             "Gradually collect the following information: name, age, gender, height, weight, fitness goals,"
             "Dietary preference(Heart Health, Low Sugar, High Energy, General), Current physical activity level (beginner, intermediate, advanced), health restrictions, dietary restrictions."
             "If null is present, ask the question and respond appropriately based on the user's answer."
@@ -134,6 +136,7 @@ def handle_chat():
         "- If the user has multiple fitness goals, mark the first one."
 
         "4. For 'dietary preference' (what the user prefers to eat):"
+        "-Realted to the fitness goal, if fitness goal is 'Weight Loss', mean he wants low sugar fodd, if fitness goal is 'Muscle Gain', high energy food is prefered."
         "- Mark 'Heart Health' if the user prefers foods that improve heart health."
         "- Mark 'Low Sugar' if the user prefers foods that lower sugar intake."
         "- Mark 'High Energy' if the user prefers foods that provide high energy."
@@ -147,11 +150,11 @@ def handle_chat():
         "- If the user gives vague information, ask more probing questions until the user gives a clear reply."
 
         "6. For 'health restrictions':"
-        "- If the user mentions any particular health restrictions or body parts, mark them."
+        "- If the user mentions any particular health restrictions on body parts, mark them."
         "- If the user says 'no', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "7. For 'dietary restrictions':"
-        "- If the user mentions any particular dietary restrictions or certain ingredients and foods, mark them."
+        "- If the user mentions any particular dietary restrictions on certain ingredients and foods, mark them."
         "- If the user says 'no', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "8. If the user's response is irrelevant or nonsensical for the requested information, do not update the profile for that key and indicate that the information is still missing."
