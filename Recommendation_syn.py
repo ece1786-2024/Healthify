@@ -74,11 +74,11 @@ def generate_fitness_plan(day, fitness_data):
 
     3. The Duration should add second after the number (e.g., "Duration: 10 seconds").
 
-    4. Format the output strictly as:
+    4. Example Output:
     {{
         
-        "Morning": ["Exercise Name: Repetition: X, Duration: Y", "Exercise Name: Repetition: X, Duration: Y"],
-        "Evening": ["Exercise Name: Repetition: X, Duration: Y", "Exercise Name: Repetition: X, Duration: Y"]
+        "Morning": ["Dumbbell Spell Caster: Repetition: X, Duration: Y", "Cable Russian: Repetition: X, Duration: Y"],
+        "Evening": ["Cable Reverse: Repetition: X, Duration: Y", "30-Minute Run: Repetition: X, Duration: Y"]
 
     }}
 
@@ -86,7 +86,7 @@ def generate_fitness_plan(day, fitness_data):
     {json.dumps(fitness_data, indent=2)}
 
     Rules:
-    - Use the format above exactly.
+    - Use the example above, and follow the same format.
     - No explanations, extra text, or code fences.
     - Ensure variety, balance, and intensity.
 
