@@ -13,9 +13,9 @@ import os
 import sqlite3
 import threading
 
-
+# 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
 client = OpenAI(
-      api_key="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"
+      api_key="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"
 )
 
 ######################################
@@ -84,7 +84,7 @@ collected_keys = set()
 
 def start_chat():
     response = client.chat.completions.create(
-        model = "gpt-4o",
+        model = "gpt-4o-mini",
         messages = messages,
         max_tokens = 150,
         temperature = 1.0,
@@ -148,32 +148,32 @@ def handle_chat():
 
         "6. For 'health restrictions':"
         "- If the user mentions any particular health restrictions or body parts, mark them."
-        "- If the user says 'no', 'none', 'no restrictions', or similar, mark 'No Restrictions'."
+        "- If the user says 'no', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "7. For 'dietary restrictions':"
         "- If the user mentions any particular dietary restrictions or certain ingredients and foods, mark them."
-        "- If the user says 'no', 'none', 'no restrictions', or similar, mark 'No Restrictions'."
+        "- If the user says 'no', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "8. If the user's response is irrelevant or nonsensical for the requested information, do not update the profile for that key and indicate that the information is still missing."
 
-        "Input:"
-        f"\n\nUser's reply:\n\"\"\"\n{user_input}\n\"\"\""
-
-        f"\n\nUser's profile:\n\"\"\"\n{user_profile}\n\"\"\""
-
-        "Output:"
-        "- Provide the updated user profile in JSON format."
-        "- If a piece of information is not provided, do not include it in the JSON."
-
-        "Process:"
-        "- Check the user's profile for any missing or null values."
-        "- For each missing key, if the user's reply provides valid information, update the profile."
-        "- If the user's reply indicates 'no' or 'none' for 'health restrictions' or 'dietary restrictions', mark 'No Restrictions' for that key."
+        "\nProcess:"
+        "- Only use the user's latest reply to update the profile."
+        "- Do not infer or assume any information not provided in the user's latest reply."
+        "- For each key, if the user's reply provides valid information, update the profile."
+        "- If the user's reply indicates 'no' or something similar for 'health restrictions' or 'dietary restrictions', mark 'No Restrictions' for that key."
         "- If the user's reply is irrelevant or nonsensical for the requested information, do not update the profile for that key."
+
+        "\nInput:"
+        f"User's reply:\n\"\"\"\n{user_input}\n\"\"\""
+
+        "\nOutput:"
+        "- Provide the updated user profile in JSON format."
+        "- Only include keys that have been updated based on the user's latest reply."
+        "- Do not include keys that have not been updated in this reply."
     )
     try:
         extraction_response = client.chat.completions.create(
-                model = "gpt-4o",
+                model = "gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": extraction_prompt}
                 ],
@@ -219,6 +219,7 @@ def handle_chat():
             f"Based on the current user profile: {user_profile}, "
             f"please ask the user to provide the following missing information: {missing_info_text}. "
             "Ask in a friendly and conversational manner. "
+            "Do not assume any information that the user has not provided. "
             "If the user's previous response was irrelevant or nonsensical for the requested information, "
             "kindly ask again for clarification."
         )
@@ -231,7 +232,7 @@ def handle_chat():
         
     try:
         response = client.chat.completions.create(
-            model = "gpt-4o",
+            model = "gpt-4o-mini",
             messages = messages,
             max_tokens = 150,
             temperature = 0.7,
@@ -255,7 +256,7 @@ def handle_chat():
 def generate_plans():
     training_rec = Training_recommendation(user_profile)
     dietary_rec = Dietary_recommendation(user_profile)
-    previous_day = "Monday"  # Assuming previous day is Monday
+    previous_day = "Monday"  # Assume the previous day is Monday
     for day in days:
         # Adjust the plans based on previous day's data
         process_recommendations(
@@ -293,7 +294,7 @@ def show_profile():
         user_name = user_profile.get("name")
         if user_name is None:
             user_name = "User"
-        tk.Label(profile_window, text=f"Hi {user_name}!", font=("Arial", 20, "bold"), bg="#e6f7d1").pack(pady=10)
+        tk.Label(profile_window, text=f"Hello {user_name}!", font=("Arial", 20, "bold"), bg="#e6f7d1").pack(pady=10)
 
         details_frame = tk.Frame(profile_window, bg="#e6f7d1")
         details_frame.pack(pady=10, padx=20, fill="both", expand=True)
@@ -355,53 +356,61 @@ def show_plan(table_data, title):
         canvas.itemconfig(canvas_frame, width=event.width)
     canvas.bind("<Configure>", on_canvas_configure)
     
+    # Header row: Morning, Noon, Evening
     header_frame = tk.Frame(frame, bg="#6ba96b")
-    header_frame.grid(row=0, column=1, columnspan=len(table_data)+1, sticky="nsew")
+    header_frame.grid(row=0, column=1, columnspan=4, sticky="nsew")
     
-    empty_label = tk.Label(header_frame, text="", bg="#6ba96b")
-    empty_label.grid(row=0, column=0, sticky="nsew")
     
-    for i, day in enumerate(table_data.keys()):
+    for i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
         label = tk.Label(
             header_frame, 
-            text=day, 
-            font=("Arial", 15), 
+            text=time_of_day, 
+            font=("Arial", 18, "bold"), 
             width=25, 
             bg="#6ba96b",
             fg="white",
             justify="center",
-            wraplength=150
+            wraplength=250,
+            relief="solid",
+            borderwidth=1
             )
-        label.grid(row=0, column=i, sticky="nsew")
-    
-    for row_i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
-        label = tk.Label(
+        label.grid(row=0, column=i + 1, sticky="nsew")
+    colors = ["#d9ead3", "#b6d7a8"]
+    for row_i, day in enumerate(table_data.keys()):
+        day_label = tk.Label(
             frame,
-            text=time_of_day, 
+            text=day, 
             font=("Arial", 18, "bold"), 
             width=15,
             bg="#556b2f", 
             fg="white",
-            anchor="center")   
-        label.grid(row=row_i+1, column=0, sticky="nsew")
+            anchor="center",
+            relief="solid",
+            borderwidth=1)   
+        day_label.grid(row=row_i+1, column=0, sticky="nsew")
         
-        for col_i, day in enumerate(table_data.keys()):
+        for col_i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
+            bg_color = colors[(row_i+col_i) % 2]
             data = table_data[day][time_of_day]
             label = tk.Label(
                 frame, 
                 text=data, 
                 font=("Arial", 12), 
-                bg="#e6f7d1", 
+                bg=bg_color, 
                 anchor="w", 
-                wraplength=150, 
-                justify="left")
+                wraplength=250, 
+                justify="left",
+                relief="solid",
+                borderwidth=1,
+                padx=10,
+                pady=10)
             label.grid(row=row_i+1, column=col_i+1, sticky="nsew")
     
-    total_columns = len(table_data) + 1
-    total_rows = len(["Morning", "Noon", "Evening"]) + 1
+    total_columns = 4
+    total_rows = len(table_data) + 1
     for i in range(total_columns):
-        frame.grid_columnconfigure(i, weight=3)
-        header_frame.grid_columnconfigure(i, weight=3)
+        frame.grid_columnconfigure(i, weight=3, uniform="columns")
+        header_frame.grid_columnconfigure(i, weight=3, uniform="columns")
     for i in range(total_rows):
         frame.grid_rowconfigure(i, weight=1)
         
@@ -409,63 +418,45 @@ def show_plan(table_data, title):
      
 
 def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=None):
+    print("Diet Plan:", diet_plan)
+    print("Fitness Plan:", fitness_plan)
+    print("Combined Timetable:", combined_timetable)
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     table = {day: {"Morning": "", "Noon": "", "Evening": ""} for day in days}
         
     for day in days:
-        table[day]["Morning"] = ""
-        table[day]["Noon"] = ""
-        table[day]["Evening"] = ""
-        
-        if diet_plan is not None and combined_timetable is None:
-            morning_diet = diet_plan.get(day, {}).get("Morning", [])
-            if morning_diet:
-                formatted_morning = "\n".join(morning_diet)
-                table[day]["Morning"] += f"Foods:\n{formatted_morning}\n"
+        for time_of_day in ["Morning", "Noon", "Evening"]:
+            table[day][time_of_day] = ""
             
-            noon_diet = diet_plan.get(day, {}).get("Noon", [])
-            if noon_diet:
-                formatted_noon = "\n".join(noon_diet)
-                table[day]["Noon"] += f"Foods:\n{formatted_noon}\n"
-                
-            evening_diet = diet_plan.get(day, {}).get("Evening", [])
-            if evening_diet:
-                formatted_evening = "\n".join(evening_diet)
-                table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
-                        
-        if fitness_plan is not None and combined_timetable is None:
-            exercises = fitness_plan.get(day, {})
-            morning_exercises = exercises.get("Morning", [])
-            evening_exercises = exercises.get("Evening", [])
-            morning_exercises_text = ", ".join(morning_exercises)
-            evening_exercises_text = ", ".join(evening_exercises)
-            table[day]["Morning"] += f"Exercises:\n{morning_exercises_text}\n"
-            table[day]["Evening"] += f"Exercises:\n{evening_exercises_text}\n"
-                
-                
-        if combined_timetable is not None:
-            morning_diet = diet_plan.get(day, {}).get("Morning", [])
-            if morning_diet:
-                formatted_morning = "\n".join(morning_diet)
-                table[day]["Morning"] += f"Foods:\n{formatted_morning}\n"
+            if diet_plan and day in diet_plan and time_of_day in diet_plan[day]:
+                diet_items = diet_plan[day][time_of_day]
+                for item in diet_items:
+                    name, *details = item.split(":")
+                    details_text = ":".join(details)
+                    table[day][time_of_day] += f"{name}:\n{details_text}\n\n"
             
-            noon_diet = diet_plan.get(day, {}).get("Noon", [])
-            if noon_diet:
-                formatted_noon = "\n".join(noon_diet)
-                table[day]["Noon"] += f"Foods:\n{formatted_noon}\n"
-                
-            evening_diet = diet_plan.get(day, {}).get("Evening", [])
-            if evening_diet:
-                formatted_evening = "\n".join(evening_diet)
-                table[day]["Evening"] += f"Foods:\n{formatted_evening}\n"
-            
-            morning_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Morning", [])
-            morning_exercise_text = ", ".join(morning_exercises)
-            table[day]["Morning"] += f"Exercises: {morning_exercise_text}\n"
-            evening_exercises = combined_timetable.get(day, {}).get("Fitness", {}).get("Evening", [])
-            evening_exercise_text = ", ".join(evening_exercises)
-            table[day]["Evening"] += f"Exercises: {evening_exercise_text}\n"
+            if fitness_plan and day in fitness_plan and time_of_day in fitness_plan[day]:
+                exercise_items = fitness_plan[day][time_of_day]
+                for item in exercise_items:
+                    name, *details = item.split(", ")
+                    details_text = "\n".join(details)
+                    table[day][time_of_day] += f"{name}\n{details_text}\n\n"
+                table[day]["Noon"] += "No exercise, take a break!\n"
                     
+            if combined_timetable and day in combined_timetable and time_of_day in combined_timetable[day]:
+                combined_items = combined_timetable[day][time_of_day]
+                diet_items = combined_items.get("Diet", [])
+                exercise_items = combined_items.get("Fitness", [])
+                for item in diet_items:
+                    name, *details = item.split(":")
+                    details_text = ": ".join(details) if details else ""
+                    table[day][time_of_day] += f"{name}\n{details_text}\n\n"
+                for item in exercise_items:
+                    name, *details = item.split(", ")
+                    details_text = "\n".join(details)
+                    table[day][time_of_day] += f"{name}\n{details_text}\n\n"
+                table[day]["Noon"] += "No exercise, take a break!\n"
+  
     return table
            
 
@@ -485,8 +476,10 @@ def show_timetable():
 def toggle_menu():
     if slide_menu.winfo_viewable():
         slide_menu.grid_remove()
+        menu_button.grid(row=0, column=0, sticky="w", padx=10, pady=10)
     else:
         slide_menu.grid()
+        menu_button.grid(row=0, column=1, sticky="w", padx=10, pady=10)
 
 # Main window setup
 root = tk.Tk()
@@ -503,16 +496,16 @@ slide_menu.grid(row=0, column=0, rowspan=3, sticky="ns")
 slide_menu.grid_remove()  # Initially hidden
 
 menu_button_style = {"font": ("Arial", 12), "bg": "#6b8e23", "fg": "white", "relief": "raised", "bd": 2}
-tk.Button(slide_menu, text="My Diet Plan", **menu_button_style, command=show_diet_plan).pack(pady=15, padx=10, fill="x")
-tk.Button(slide_menu, text="My Fitness Plan", **menu_button_style, command=show_fitness_plan).pack(pady=15, padx=10, fill="x")
+tk.Button(slide_menu, text="My Diet", **menu_button_style, command=show_diet_plan).pack(pady=15, padx=10, fill="x")
+tk.Button(slide_menu, text="My Fitness", **menu_button_style, command=show_fitness_plan).pack(pady=15, padx=10, fill="x")
 tk.Button(slide_menu, text="My Timetable", **menu_button_style, command=show_timetable).pack(pady=15, padx=10, fill="x")
 
 # Header and toggle button
 header = tk.Frame(root, bg="#e6f7d1")
 header.grid(row=0, column=1, sticky="ew")
 
-menu_button = tk.Button(header, text="☰", font=("Arial", 15), bg="#e6f7d1", relief="flat", command=toggle_menu)
-menu_button.pack(side="left", padx=10)
+menu_button = tk.Button(root, text="☰", font=("Arial", 15, "bold"), bg="#e6f7d1", relief="flat", command=toggle_menu)
+menu_button.grid(row=0, column=0, sticky="w", padx=10, pady=10)
 
 # Main chat frame
 chat_frame = tk.Frame(root, bg="#e6f7d1", padx=20, pady=20)
@@ -563,7 +556,7 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
 
     # Display the adjusted plans
     chat_display.config(state="normal")
-    chat_display.insert(tk.END, f"\nAssistant: Here is your adjusted plan for {day}:\n")    
+    #chat_display.insert(tk.END, f"\nAssistant: Here is your adjusted plan for {day}:\n")    
     chat_display.insert(tk.END, f"Diet Plan for {day} is complete. \n")
     chat_display.insert(tk.END, f"Fitness Plan for {day} is complete. \n")
     chat_display.see(tk.END)
@@ -588,7 +581,7 @@ profile_button = tk.Button(
     bd=2
     
     )
-profile_button.grid(row=2, column=0, pady=20, padx=20, sticky="sw")
+profile_button.grid(row=2, column=0, pady=15, padx=15, sticky="sw")
 
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(1, weight=1)

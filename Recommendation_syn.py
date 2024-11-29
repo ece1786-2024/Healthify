@@ -147,8 +147,8 @@ def adjust_daily_progress(day, previous_day, calories_week, diet_plan, fitness_p
     The output should be in the following format:
     {{
         "exercise_plan":{{
-        "Morning": ["Exercise Name: Repetition: X, Duration: Y seconds", "Exercise Name: Repetition: X, Duration: Y seconds"],
-        "Evening": ["Exercise Name: Repetition: X, Duration: Y seconds", "Exercise Name: Repetition: X, Duration: Y seconds"]
+        "Morning": ["Dumbbell Spell Caster, Repetition: X, Duration: Y", "Cable Russian, Repetition: X, Duration: Y"],
+        "Evening": ["Cable Reverse, Repetition: X, Duration: Y", "30-Minute Run, Repetition: X, Duration: Y"]
         }},
         "diet_plan":{{
           "Morning": [
