@@ -111,63 +111,61 @@ def handle_chat():
     chat_display.config(state="disabled")
     
     extraction_prompt = (
-        " As an AI assistant, extract personal information provided from the user's response. "
-        " The following keys need to collect information:"  
-        " 'name(The user name is a combination of letters)', 'age', 'gender', 'height', 'weight', 'fitness goal', 'dietary preference', " 
-        " 'current physical activity level', 'health restrictions', 'dietary restrictions'."  
+        "As an AI assistant, extract personal information provided from the user's response. "
+        "The following keys need to collect information: "
+        "'name (The user name is a combination of letters)', 'age', 'gender', 'height', 'weight', 'fitness goal', 'dietary preference', "
+        "'current physical activity level', 'health restrictions', 'dietary restrictions'."
 
-        " Rules:" 
-        " 1. For 'height':"
-        " - The height should be in centimeters, not including the unit."
-        " - If the height is in feet and inches, convert it to centimeters."
+        "Rules:"
+        "1. For 'height':"
+        "- The height should be in centimeters, not including the unit."
+        "- If the height is in feet and inches, convert it to centimeters."
 
-        " 2. For 'weight':"
-        " - The weight should be in kilograms, not including the unit."
-        " - If the weight is in pounds, convert it to kilograms."
+        "2. For 'weight':"
+        "- The weight should be in kilograms, not including the unit."
+        "- If the weight is in pounds, convert it to kilograms."
 
-        " 3. For 'fitness goal':" 
-        " - Mark as 'Weight Loss' if the user wants to lose weight." 
-        " - Mark as 'Muscle Gain' if the user wants to gain muscle." 
-        " - Mark as 'Improved Endurance' if the user wants to improve endurance." 
-        " - Mark as 'Relieve Stress' if the user wants to relieve stress." 
-        " - Mark as 'General' if the user has no specific fitness goal."
-        " - If the user has multiple fitness goals, mark the first one."
+        "3. For 'fitness goal':"
+        "- Mark as 'Weight Loss' if the user wants to lose weight."
+        "- Mark as 'Muscle Gain' if the user wants to gain muscle."
+        "- Mark as 'Improved Endurance' if the user wants to improve endurance."
+        "- Mark as 'Relieve Stress' if the user wants to relieve stress."
+        "- Mark as 'General' if the user has no specific fitness goal."
+        "- If the user has multiple fitness goals, mark the first one."
 
-        " 4. For 'dietary preference' (what the user prefers to eat):" 
-        " - Mark 'Heart Health' if the user prefers foods that improve heart health." 
-        " - Mark 'Low Sugar' if the user prefers foods that lower sugar intake." 
-        " - Mark 'High Energy' if the user prefers foods that provide high energy." 
-        " - Mark 'General' if the user has no specific dietary requirements." 
-        " - If the user has multiple dietary preferences, mark the first one."
-      
-        " 5. For 'current physical activity level':" 
-        " - Mark 'beginner' if the user is new to exercise." 
-        " - Mark 'intermediate' if the user engages in light exercise." 
-        " - Mark 'advanced' if the user exercises regularly." 
-        " - If the user gives vague information, as more probing questions until the user gives clear reply."
+        "4. For 'dietary preference' (what the user prefers to eat):"
+        "- Mark 'Heart Health' if the user prefers foods that improve heart health."
+        "- Mark 'Low Sugar' if the user prefers foods that lower sugar intake."
+        "- Mark 'High Energy' if the user prefers foods that provide high energy."
+        "- Mark 'General' if the user has no specific dietary requirements."
+        "- If the user has multiple dietary preferences, mark the first one."
 
-        " 6. For 'health restrictions':"
-        " - If the user mentions any particular health restrictions or body parts, mark them."
+        "5. For 'current physical activity level':"
+        "- Mark 'beginner' if the user is new to exercise."
+        "- Mark 'intermediate' if the user engages in light exercise."
+        "- Mark 'advanced' if the user exercises regularly."
+        "- If the user gives vague information, ask more probing questions until the user gives a clear reply."
+
+        "6. For 'health restrictions':"
+        "- If the user mentions any particular health restrictions or body parts, mark them."
         "- If the user says 'no', 'none', 'no restrictions', or similar, mark 'No Restrictions'."
 
-        " 7. For 'dietary restrictions':"
-        " - If the user mentions any particular dietary restrictions or certain ingredients and foods, mark them."
+        "7. For 'dietary restrictions':"
+        "- If the user mentions any particular dietary restrictions or certain ingredients and foods, mark them."
         "- If the user says 'no', 'none', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "8. If the user's response is irrelevant or nonsensical for the requested information, do not update the profile for that key and indicate that the information is still missing."
 
-        " Input: "
-        "\n\nUser's reply:\n"
-        f"\"\"\"\n{user_input}\n\"\"\""
+        "Input:"
+        f"\n\nUser's reply:\n\"\"\"\n{user_input}\n\"\"\""
 
-        "\n\nUser's profile:\n"
-        f"\"\"\"\n{user_profile}\n\"\"\""
+        f"\n\nUser's profile:\n\"\"\"\n{user_profile}\n\"\"\""
 
-        " Output:" 
-        " - Provide the updated user profile in JSON format." 
-        " - If a piece of information is not provided, do not include it in the JSON." 
+        "Output:"
+        "- Provide the updated user profile in JSON format."
+        "- If a piece of information is not provided, do not include it in the JSON."
 
-        " Process:" 
+        "Process:"
         "- Check the user's profile for any missing or null values."
         "- For each missing key, if the user's reply provides valid information, update the profile."
         "- If the user's reply indicates 'no' or 'none' for 'health restrictions' or 'dietary restrictions', mark 'No Restrictions' for that key."
@@ -210,6 +208,27 @@ def handle_chat():
         print("Extraction Result was:", extraction_result)
         pass  # Proceed to the next iteration
     
+    missing_info = [key for key, value in user_profile.items() if value is None]
+    print("current user profile:", user_profile)    
+    print("Missing info:", missing_info)
+    
+    if missing_info:
+        missing_info_text = ", ".join(missing_info)
+        system_prompt = (
+            f"As a friendly fitness assistant, please continue the conversation with the user. "
+            f"Based on the current user profile: {user_profile}, "
+            f"please ask the user to provide the following missing information: {missing_info_text}. "
+            "Ask in a friendly and conversational manner. "
+            "If the user's previous response was irrelevant or nonsensical for the requested information, "
+            "kindly ask again for clarification."
+        )
+        messages.append({"role": "system", "content": system_prompt})
+    else:
+        system_prompt = (
+        "All user information has been collected. Please inform the user that their personalized plans are being generated. Tell the user it will take a few minutes to generate the plans. Let the user bear with you."
+        )
+        messages.append({"role": "system", "content": system_prompt})
+        
     try:
         response = client.chat.completions.create(
             model = "gpt-4o",
@@ -219,53 +238,19 @@ def handle_chat():
         )
     except Exception as e:
         print("OpenAI API call failed:", e)
-        return
+        return 
     
     assistant_message = response.choices[0].message.content.strip()
     messages.append({"role": "assistant", "content": assistant_message})
     chat_display.config(state="normal")
     chat_display.insert(tk.END, f"Assistant: {assistant_message}\n")
     chat_display.see(tk.END)
-    chat_display.config(state="disabled")
-
-    missing_info = [key for key, value in user_profile.items() if value is None]
-    print("current user profile:", user_profile)    
-    print("Missing info:", missing_info)
+    chat_display.config(state="disabled")    
     
     if not missing_info:
-        chat_display.config(state="normal")
-        chat_display.insert(tk.END, "Assistant: All information collected.\n Please wait a few seconds while I generate your plans.\n")
-        chat_display.see(tk.END)
-        chat_display.config(state="disabled")
         threading.Thread(target=generate_plans).start()
-        
-        """# Proceed to generate diet and fitness plan
-        training_rec = Training_recommendation(user_profile)
-        dietary_rec = Dietary_recommendation(user_profile)
-        # Now proceed to simulate the days
-        previous_day = "Monday"  # Assuming previous day is Monday
-        for day in days:
-            # Adjust the plans based on previous day's data
-            process_recommendations(
-                training_rec,
-                dietary_rec,
-                day=day,
-                previous_day=previous_day,
-                calories_week=calories_week
-            )
-            # Update the previous day
-            previous_day = day
-            # Update the GUI
-            root.update()
-        # After simulating the days, inform the user
-        chat_display.config(state="normal")
-        chat_display.insert(tk.END, "Assistant: Your plans have been generated.\n")
-        chat_display.see(tk.END)
-        chat_display.config(state="disabled")    """    
-    else:
-        chat_display.config(state="normal")
-        chat_display.see(tk.END)
-        chat_display.config(state="disabled")
+       
+    
         
 def generate_plans():
     training_rec = Training_recommendation(user_profile)
