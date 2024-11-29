@@ -431,14 +431,14 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                 for item in diet_items:
                     name, *details = item.split(":")
                     details_text = ":".join(details)
-                    table[day][time_of_day] += f"{name}:\n{details_text}\n\n"
+                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
             
             if fitness_plan and day in fitness_plan and time_of_day in fitness_plan[day]:
                 exercise_items = fitness_plan[day][time_of_day]
                 for item in exercise_items:
                     name, *details = item.split(", ")
                     details_text = "\n".join(details)
-                    table[day][time_of_day] += f"{name}\n{details_text}\n\n"
+                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
                 table[day]["Noon"] += "No exercise, take a break!\n"
                     
             if combined_timetable and day in combined_timetable and time_of_day in combined_timetable[day]:
@@ -448,11 +448,11 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                 for item in diet_items:
                     name, *details = item.split(":")
                     details_text = ": ".join(details) if details else ""
-                    table[day][time_of_day] += f"{name}\n{details_text}\n\n"
+                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
                 for item in exercise_items:
                     name, *details = item.split(", ")
                     details_text = "\n".join(details)
-                    table[day][time_of_day] += f"{name}\n{details_text}\n\n"
+                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
                 #table[day]["Noon"] += "No exercise, take a break!\n"
   
     return table
