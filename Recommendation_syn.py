@@ -77,8 +77,8 @@ def generate_fitness_plan(day, fitness_data):
     4. Example Output:
     {{
         
-        "Morning": ["Dumbbell Spell Caster: Repetition: X, Duration: Y", "Cable Russian: Repetition: X, Duration: Y"],
-        "Evening": ["Cable Reverse: Repetition: X, Duration: Y", "30-Minute Run: Repetition: X, Duration: Y"]
+ll Caster, Repetition: X, Duration: Y", "Cable Russian, Repetition: X, Duration: Y"],
+        "Evening": ["Cable Reverse: Repetition: X, Duration: Y", "30-Minute Run, Repetition:         "Morning": ["Dumbbell SpeX, Duration: Y"]
 
     }}
 
