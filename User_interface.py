@@ -358,7 +358,9 @@ def show_plan(table_data, title):
     
     # Header row: Morning, Noon, Evening
     header_frame = tk.Frame(frame, bg="#6ba96b")
-    header_frame.grid(row=0, column=1, columnspan=4, sticky="nsew")
+    header_frame.grid(row=0, column=0, columnspan=4, sticky="nsew")
+    empty_label = tk.Label(header_frame, text="", bg="#6ba96b")
+    empty_label.grid(row=0, column=0, sticky="nsew")
     
     
     for i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
@@ -366,7 +368,6 @@ def show_plan(table_data, title):
             header_frame, 
             text=time_of_day, 
             font=("Arial", 18, "bold"), 
-            width=25, 
             bg="#6ba96b",
             fg="white",
             justify="center",
@@ -375,13 +376,13 @@ def show_plan(table_data, title):
             borderwidth=1
             )
         label.grid(row=0, column=i + 1, sticky="nsew")
+        
     colors = ["#d9ead3", "#b6d7a8"]
     for row_i, day in enumerate(table_data.keys()):
         day_label = tk.Label(
             frame,
             text=day, 
             font=("Arial", 18, "bold"), 
-            width=15,
             bg="#556b2f", 
             fg="white",
             anchor="center",
@@ -418,9 +419,6 @@ def show_plan(table_data, title):
      
 
 def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=None):
-    print("Diet Plan:", diet_plan)
-    print("Fitness Plan:", fitness_plan)
-    print("Combined Timetable:", combined_timetable)
     days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     table = {day: {"Morning": "", "Noon": "", "Evening": ""} for day in days}
         
