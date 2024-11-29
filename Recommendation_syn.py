@@ -47,7 +47,7 @@ def generate_diet_plan(day, diet_data):
         {json.dumps(diet_data, indent=2)}
         """
     response = client.chat.completions.create(
-        model = "gpt-3.5-turbo",
+        model = "gpt-4o-mini",
         max_tokens = 1000,
         temperature = 0.7,
         messages = [
@@ -93,7 +93,7 @@ def generate_fitness_plan(day, fitness_data):
     Output only as a JSON object.
     """
     response = client.chat.completions.create(
-        model = "gpt-3.5-turbo",
+        model = "gpt-4o-mini",
         max_tokens = 1000,
         temperature = 0.7,
         messages = [
@@ -171,7 +171,7 @@ def adjust_daily_progress(day, previous_day, calories_week, diet_plan, fitness_p
     """
 
     response = client.chat.completions.create(
-        model = "gpt-4",
+        model = "gpt-4o-mini",
         max_tokens = 1000,
          temperature = 0.7,
         messages = [
