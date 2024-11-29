@@ -15,7 +15,7 @@ import threading
 
 # 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
 client = OpenAI(
-      api_key="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"
+      api_key="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"
 )
 
 ######################################
@@ -453,7 +453,7 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                     name, *details = item.split(", ")
                     details_text = "\n".join(details)
                     table[day][time_of_day] += f"{name}\n{details_text}\n\n"
-                table[day]["Noon"] += "No exercise, take a break!\n"
+                #table[day]["Noon"] += "No exercise, take a break!\n"
   
     return table
            
@@ -604,3 +604,42 @@ __all__ = [
     "fitness_plan",
     "combined_plan"
 ]
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(current_dir, "user_profiles.db")
+conn = sqlite3.connect(db_path)
+cursor = conn.cursor()
+
+# Create the user_profiles table if it does not exist
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    age INTEGER,
+    gender TEXT,
+    height INTEGER,
+    weight INTEGER,
+    fitness_goal TEXT,
+    dietary_preference TEXT,
+    physical_activity_level TEXT,
+    health_restrictions TEXT,
+    dietary_restrictions TEXT
+)''')
+
+# Add the user profile to the database
+cursor.execute('''
+INSERT INTO user_profiles (
+    name, age, gender, height, weight, fitness_goal, dietary_preference,
+    physical_activity_level, health_restrictions, dietary_restrictions
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+''', (
+    user_profile['name'], user_profile['age'], user_profile['gender'], user_profile['height'], 
+    user_profile['weight'], user_profile['fitness goal'], user_profile['dietary preference'],
+    user_profile['current physical activity levels'], user_profile['health restrictions'],
+    user_profile['dietary restrictions']
+))
+
+# Commit and close the connection
+conn.commit()
+conn.close()
