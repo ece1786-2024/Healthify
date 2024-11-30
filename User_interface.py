@@ -140,7 +140,9 @@ def handle_chat():
         "- Mark 'Heart Health' if the user prefers foods that improve heart health."
         "- Mark 'Low Sugar' if the user prefers foods that lower sugar intake."
         "- Mark 'High Energy' if the user prefers foods that provide high energy."
-        "- Mark 'General' if the user has no specific dietary requirements."
+        "- Mark 'Vegan' if the user follows a vegan diet."
+        "- Mark 'Keto', 'Paleo', 'Gluten-Free', or other specific preferences based on their dietary approach."
+        "- Mark 'General' If the user does not have these specific dietary requirements above."
         "- If the user has multiple dietary preferences, mark the first one."
 
         "5. For 'current physical activity level':"
@@ -150,21 +152,20 @@ def handle_chat():
         "- If the user gives vague information, ask more probing questions until the user gives a clear reply."
 
         "6. For 'health restrictions':"
-        "- If the user mentions any particular health restrictions on body parts, mark them."
+        "- health restrictions focus on restrictions on body parts"
         "- If the user says 'no', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "7. For 'dietary restrictions':"
-        "- If the user mentions any particular dietary restrictions on certain ingredients and foods, mark them."
+        "- dietary restrictions focus on restrictions  on certain ingredients and foods."
         "- If the user says 'no', 'no restrictions', or similar, mark 'No Restrictions'."
 
         "8. If the user's response is irrelevant or nonsensical for the requested information, do not update the profile for that key and indicate that the information is still missing."
 
         "\nProcess:"
-        "- Only use the user's latest reply to update the profile."
+        "- Update the profile based on the information include."
         "- Do not infer or assume any information not provided in the user's latest reply."
         "- For each key, if the user's reply provides valid information, update the profile."
-        "- If the user's reply indicates 'no' or something similar for 'health restrictions' or 'dietary restrictions', mark 'No Restrictions' for that key."
-        "- If the user's reply is irrelevant or nonsensical for the requested information, do not update the profile for that key."
+        "- If the user's reply does not include the missing keys, ask follow-up questions to gather specific details for missing keys."
 
         "\nInput:"
         f"User's reply:\n\"\"\"\n{user_input}\n\"\"\""
