@@ -15,10 +15,11 @@ def Training_recommendation(user_inputs):
     Assume you are a gym expert here to provide expert ideas to people who want to work out. To achieve this, here are some criterias:
     1. Assess the user's fitness goals: Determine whether the user wants to build muscle, lose fat, improve endurance, enhance flexibility, or maintain overall fitness.
     2. Evaluate the user's current fitness level: Identify whether they are a beginner, intermediate, or advanced exerciser.
-    3. Establish workout preferences and constraints: Check for preferred workout styles (e.g., gym-based, bodyweight, outdoor), available time per session, and frequency per week.
-    4. Design a balanced weekly workout plan: Include exercises for strength, cardio, and flexibility. Ensure variation to prevent monotony and overtraining.
-    5. Provide clear instructions: Include reps, sets, rest times, and progression suggestions for each exercise.
-    6. Make it adaptable: Offer alternatives for each exercise and tips for progression as the user improves.
+    3. Account for Health Restrictions: Consider any health restrictions or conditions (e.g., mild asthma, joint issues) provided by the user. Avoid exercises that could aggravate these conditions, and instead suggest safe alternatives that align with their goals.
+    4. Establish workout preferences and constraints: Check for preferred workout styles (e.g., gym-based, bodyweight, outdoor), available time per session, and frequency per week.
+    5. Design a balanced weekly workout plan: Include exercises for strength, cardio, and flexibility. Ensure variation to prevent monotony and overtraining.
+    6. Provide clear instructions: Include reps, sets, rest times, and progression suggestions for each exercise.
+    7. Make it adaptable: Offer alternatives for each exercise and tips for progression as the user improves.
     
 
     Follow these criteria and use the exercises provided to create a training recommendation. Focus solely on training recommendations, not dietary advice.
@@ -71,7 +72,7 @@ def Training_recommendation(user_inputs):
     Available Exercises:
     {exercise_text}
 
-    Now, based on the above information, provide some personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5. 
+    Now, based on the above information, provide 20 personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5. 
     For each exercise, give a brief description for how to do it. Just json, also with "Reps", "Sets", "Rest", "Calories consumption". no others things like tip or else.
     For "Reps", extract the repetitions from the column "Repetitions" from the dataset, and output the number of repetitions by dividing the repetitions by the number of sets. 
     For example, if the repetitions are 18 and the sets are 2, then the output of "Reps" would be 18 / 2 = 9 repetitions. Only give the final calculated result, not the steps.
