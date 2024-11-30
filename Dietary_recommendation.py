@@ -6,7 +6,10 @@ import pandas as pd
 # Load the CSV file into a DataFrame
 current_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(current_dir, "Enhanced_Nutrition_Dataset.csv")
-df = pd.read_csv(file_path)
+try:
+    df = pd.read_csv(file_path, encoding='utf-8')  # Default
+except UnicodeDecodeError:
+    df = pd.read_csv(file_path, encoding='ISO-8859-1')  # Alternate encoding
 
 # Detect the dietary purpose based on the fitness goals (Default: Weight Loss)
 def dietary_purpose(Fitness_goals):
@@ -102,7 +105,8 @@ def Dietary_recommendation(user_input):
 
     For output sequence, provide a dietary recommendation for the user based on the extracted information. 
     The output should be a JSON format sequences with keys: Name, BMI, TDEE, Daily Food Choices_1, Daily Food Choices_2, Daily Food Choices_3, Daily Food Choices_4, Daily Food Choices_5. Only include BMI & TDEE number, not calculation.
-    The Daily Food Choices keys contains daily food choices and weight for each kind of food. 
+    The Daily Food Choices keys contains daily food choices and weight and calorie and nutritional facts (total_fat, sodium, protein, carbohydrate) for each kind of food. 
+    For the calories and nutritional facts, extract those information from the loaded dataset, do not make up any information.
     The output should remove Markdown code.
     """
         response = client.chat.completions.create(
@@ -120,6 +124,5 @@ def Dietary_recommendation(user_input):
 
     # Extract user profile
     recommendation = dietary_recommendation(user_input)
-
     return recommendation
 

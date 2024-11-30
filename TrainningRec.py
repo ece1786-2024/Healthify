@@ -6,7 +6,10 @@ def Training_recommendation(user_inputs):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(current_dir, "Final_Gym_Dataset.csv")
 
-    df = pd.read_csv(file_path)
+    try:
+        df = pd.read_csv(file_path, encoding='utf-8')  # Default
+    except UnicodeDecodeError:
+        df = pd.read_csv(file_path, encoding='ISO-8859-1')  # Alternate encoding
 
     criteria = """
     Assume you are a gym expert here to provide expert ideas to people who want to work out. To achieve this, here are some criterias:
@@ -16,6 +19,7 @@ def Training_recommendation(user_inputs):
     4. Design a balanced weekly workout plan: Include exercises for strength, cardio, and flexibility. Ensure variation to prevent monotony and overtraining.
     5. Provide clear instructions: Include reps, sets, rest times, and progression suggestions for each exercise.
     6. Make it adaptable: Offer alternatives for each exercise and tips for progression as the user improves.
+    
 
     Follow these criteria and use the exercises provided to create a training recommendation. Focus solely on training recommendations, not dietary advice.
     """
@@ -28,9 +32,9 @@ def Training_recommendation(user_inputs):
     ]
 
     # If the dataset is large, limit the number of exercises
-    relevant_exercises = relevant_exercises.head(10)
+    relevant_exercises = relevant_exercises.head(50)
 
-    exercise_list = relevant_exercises[['Title', 'Desc', 'BodyPart', 'Equipment', 'Duration (seconds)', 'Repetitions']].to_dict('records')
+    exercise_list = relevant_exercises[['Title', 'Desc', 'BodyPart', 'Equipment', 'Duration (seconds)', 'Repetitions', 'Calories consumption']].to_dict('records')
 
     exercise_text = ""
     for exercise in exercise_list:
@@ -40,13 +44,15 @@ def Training_recommendation(user_inputs):
         equipment = exercise.get('Equipment', 'None')
         duration = exercise.get('Duration (seconds)', 'Varies')
         repetitions = exercise.get('Repetitions', 'Varies')
+        calories = exercise.get('Calories consumption', 'Varies')
     
         exercise_text += f"Title: {title}\n"
         exercise_text += f"Description: {desc}\n"
         exercise_text += f"Body Part: {body_part}\n"
         exercise_text += f"Equipment: {equipment}\n"
         exercise_text += f"Duration: {duration} seconds\n"
-        exercise_text += f"Repetitions: {repetitions}\n\n"
+        exercise_text += f"Repetitions: {repetitions}\n"
+        exercise_text += f"Calories consumption: {calories}\n\n"
 
     client = OpenAI(
         api_key="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"
@@ -65,7 +71,12 @@ def Training_recommendation(user_inputs):
     Available Exercises:
     {exercise_text}
 
-    Now, based on the above information, provide some personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5, for each exercise, give a brief description for how to do it. Just json, also with "Reps", "Sets","Rest". no others things like tip or else.
+    Now, based on the above information, provide some personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5. 
+    For each exercise, give a brief description for how to do it. Just json, also with "Reps", "Sets", "Rest", "Calories consumption". no others things like tip or else.
+    For "Reps", extract the repetitions from the column "Repetitions" from the dataset, and output the number of repetitions by dividing the repetitions by the number of sets. 
+    For example, if the repetitions are 18 and the sets are 2, then the output of "Reps" would be 18 / 2 = 9 repetitions. Only give the final calculated result, not the steps.
+    For "Sets", assume the user will do 2-3 sets for each exercise.
+    For "Calories consumption", output the calories from the column "Calories consumption" from the dataset, do not make up any information or any calculations.
     """
 
 
@@ -76,6 +87,7 @@ def Training_recommendation(user_inputs):
         ]
     )
     output_text = completion.choices[0].message.content.strip()
+    print(output_text)
     return output_text
 
 
