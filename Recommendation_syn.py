@@ -298,10 +298,11 @@ The weekly calorie tracking data is:
 1. **Adjust the Fitness Plan**:
 
    - **Increase the total exercise time and calorie consumption** to meet the minimum required:
-     - **Total Time (minutes)**: At least **60 minutes**.
+     - **Total Time (minutes)**: the sum of Total Time for each exercise at least **60 minutes** and no more than **120** minutes.
      - **Total Calorie Consumption (cal)**: At least **400 calories**.
    - **Select additional exercises** that are suitable for the user's fitness level and health conditions.
-   - Ensure that the **number of workouts is between 4 and 6**, and the **number of sets is at least 6**.
+   - The sum of bmi and Total Calorie Consumption (cal) in fitness plan should larger than the total daily calories in diet plan.
+   - Ensure that the **number of workouts is between 4 and 6**, and the **number of sets is at least 6 less than 12 (based on the total time not excced two hours)**.
 
 2. **Adjust the Diet Plan**:
 

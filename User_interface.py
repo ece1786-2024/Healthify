@@ -36,9 +36,9 @@ calories_week = {
     "Tuesday": {"Calorie intake": 2200, "calories burned (exercise)": 420},
     "Wednesday": {"Calorie intake": 2300, "calories burned (exercise)": 0}, # lazy, not exercise
     "Thursday": {"Calorie intake": 2300, "calories burned (exercise)": 430},
-    "Friday": {"Calorie intake": 3000, "calories burned (exercise)": 0},    # the rest day
-    "Saturday": {"Calorie intake": 2200, "calories burned (exercise)": 400},
-    "Sunday": {"Calorie intake": 2700, "calories burned (exercise)": 480},  # eat too much
+    "Friday": {"Calorie intake": 2400, "calories burned (exercise)": 0},    # the rest day
+    "Saturday": {"Calorie intake": 2600, "calories burned (exercise)": 400},
+    "Sunday": {"Calorie intake": 2500, "calories burned (exercise)": 350},  # eat too much
 }
 
 # List of days from today (Tuesday) until next Monday
