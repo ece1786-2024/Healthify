@@ -1,7 +1,7 @@
 import os
-from openai import OpenAI
 import json
 import pandas as pd
+from openai import OpenAI
 
 # Load the CSV file into a DataFrame
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -38,10 +38,9 @@ def dietary_preference(Dietary_preference):
         return 'General'
 
 def Dietary_recommendation(user_input): 
-    # Set those parameters based on the user input
+    # Set parameters based on the user input
     user_purpose = dietary_purpose(user_input['fitness goal'])
     user_preference = dietary_preference(user_input['dietary preference'])
-
 
     # Filter the candidate foods based on the user's dietary preference and fitness goals
     if user_purpose == 'Muscle Gain':
@@ -54,7 +53,8 @@ def Dietary_recommendation(user_input):
         candidate_foods = df[df['stress_relief'] == 1]
     elif user_purpose == 'Heart Health':
         candidate_foods = df[df['heart_health'] == 1]
-
+    else:
+        candidate_foods = df  # Default to all foods if no specific purpose
 
     if user_preference == 'Heart Health':
         candidate_foods = candidate_foods[candidate_foods['category'] == 'Heart Health']
@@ -62,9 +62,11 @@ def Dietary_recommendation(user_input):
         candidate_foods = candidate_foods[candidate_foods['category'] == 'Low Sugar']
     elif user_preference == 'High Energy':
         candidate_foods = candidate_foods[candidate_foods['category'] == 'High Energy']
+    else:
+        candidate_foods = candidate_foods  # No additional filtering for 'General'
 
-    food_list = candidate_foods[['name', 'calories', 'total_fat', 'protein', 'carbohydrate']].to_dict('records')
     # Limit the number of foods to 200
+    food_list = candidate_foods[['name', 'calories', 'total_fat', 'protein', 'carbohydrate']].to_dict('records')
     food_list = food_list[:200]
 
     # Convert the food list to a text format
@@ -77,44 +79,63 @@ def Dietary_recommendation(user_input):
         carbohydrate = food.get('carbohydrate')
         
         food_text += f"name: {name}\n"
-        food_text += f"calories: {calories}\n"
-        food_text += f"total_fat: {total_fat}\n"
-        food_text += f"protein: {protein}\n"
-        food_text += f"carbohydrate: {carbohydrate}\n"
-
+        food_text += f"calories per gram: {calories} cal/g\n"
+        food_text += f"total_fat per gram: {total_fat} g/g\n"
+        food_text += f"protein per gram: {protein} g/g\n"
+        food_text += f"carbohydrate per gram: {carbohydrate} g/g\n"
 
     client = OpenAI(
-        api_key = os.getenv('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'),
+        api_key = os.getenv('YOUR_API_KEY'),
     )
 
     def dietary_recommendation(user_input):
         prompt = f"""
+User Input: {user_input}
+Loaded Dataset:
+{food_text}
 
-    User Input:{user_input}
-    Loaded Dataset:{food_text}    
+Using the loaded dataset and the user input, recommend a diverse and balanced set of food items for the user. For each food item, provide the calories and nutritional values per gram. Do not limit or specify the weight of each food item.
 
-    Use the loaded dataset and the User Input to recommend a dietary food choice for the user based on the extracted information. 
-    The input sequence includes essential information about the user's profile, such as the user's age, gender, weight, fitness goal, dietary restrictions, eating preference. 
-    The loaded dataset contains a list of food items with their nutritional information, such as calories, total fat, protein, and carbohydrate.
-    Use user's age, gender, weight information to estimate the user's Body Mass Index (BMI) and Total Daily Energy Expenditure (TDEE).
-    After calculating the BMI and TDEE, combining the eating preference to calculate the daily calorie and food weight intake, recommend five sets of dietary food choices for the user using the loaded food dataset.
-    The dietary food choices should include the food name and weight for each kind of food.
-    The recommendation sets should comply with the user's dietary restrictions. Any food that violates the user's dietary restrictions should be excluded from the recommendation.
+The user's profile includes age, gender, weight, fitness goal, dietary restrictions, and eating preferences. Use the user's age, gender, and weight to estimate their Body Mass Index (BMI) and Total Daily Energy Expenditure (TDEE). After calculating the BMI and TDEE, combine this information with the user's eating preferences to calculate their daily calorie needs.
 
+Recommend a list of food items suitable for the user using the loaded food dataset. Each item should include:
 
+- Food Name
+- Calories per gram
+- Total Fat per gram
+- Protein per gram
+- Carbohydrate per gram
 
-    For output sequence, provide a dietary recommendation for the user based on the extracted information. 
-    The output should be a JSON format sequences with keys: Name, BMI, TDEE, Daily Food Choices_1, Daily Food Choices_2, Daily Food Choices_3, Daily Food Choices_4, Daily Food Choices_5. Only include BMI & TDEE number, not calculation.
-    The Daily Food Choices keys contains daily food choices and weight and calorie and nutritional facts (total_fat, sodium, protein, carbohydrate) for each kind of food. 
-    For the calories and nutritional facts, extract those information from the loaded dataset, do not make up any information.
-    The output should remove Markdown code.
-    """
+Ensure that the recommendations comply with the user's dietary restrictions. Exclude any foods that violate these restrictions. The recommended foods should be common and accessible.
+
+The output should have at least 20 foods.
+
+The output should be in JSON format with the following structure:
+
+{{
+  "Name": "User's Name",
+  "BMI": calculated_value,
+  "TDEE": calculated_value,
+  "Recommended Foods": [
+    {{
+      "Food": "Food Name",
+      "Calories per gram": X,
+      "Total Fat per gram": X,
+      "Protein per gram": X,
+      "Carbohydrate per gram": X
+    }},
+    ...
+  ]
+}}
+
+Only include the calculated BMI and TDEE numbers; do not show the calculation steps. Do not include any explanations or markdown formatting in your output.
+        """
         response = client.chat.completions.create(
             model = "gpt-4o",
-            max_tokens = 700,
-            temperature = 0,
+            max_tokens = 1500,
+            temperature = 0.7,
             messages = [
-                {"role": "system", "content": prompt}
+                {"role": "user", "content": prompt}
             ]
         )
 
@@ -122,7 +143,9 @@ def Dietary_recommendation(user_input):
 
         return extracted_info
 
-    # Extract user profile
+    # Generate the recommendations
     recommendation = dietary_recommendation(user_input)
+    print(recommendation)
     return recommendation
+
 

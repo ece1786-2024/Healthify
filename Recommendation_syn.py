@@ -2,53 +2,107 @@ import os
 from openai import OpenAI
 import json
 import pandas as pd
+import sqlite3
 
+# Connect to the SQLite database
+def fetch_user_data(user_id, database="user_profiles.db"):
+    connection = sqlite3.connect(database)
+    cursor = connection.cursor()
+    
+    # Fetch the table structure (columns)
+    cursor.execute("PRAGMA table_info(user_profiles);")
+    columns = [column[1] for column in cursor.fetchall()]
+    
+    # Fetch the user's data
+    cursor.execute("SELECT * FROM user_profiles WHERE id = ?;", (user_id,))
+    rows = cursor.fetchall()
+    
+    # Close the connection
+    connection.close()
+    
+    return columns, rows
 
 client = OpenAI(
-    api_key = os.getenv('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'),
+    api_key = os.getenv('YOUR_API_KEY'),
 )
 
-def generate_diet_plan(day, diet_data):
+def generate_diet_plan(day, diet_data, columns, rows):
     prompt = f"""
-        You are a diet planner AI. Using the following provided daily food choices, create a balanced diet plan for {day}.
-        Each meal must include:
-        - A combination of items (at least 2 for Morning, and at least 3 for Noon and Evening).
-        - Each food combination must be provided in the strict format: "Name: Cooking instructions".
-        - Replace "Name" with the actual food name or combination (e.g., "Salmon Salad").
-        - Total amount of Calories should not exceed 2500 for the day.
-        - "Cooking instructions" should describe the steps to prepare the meal, including the cooking method, key ingredients, and any important preparation details.
-        - Total amount of Calories for that meal in the format "Calories: X". 
+You are a diet planner AI. Using the following provided daily food choices, create a balanced diet plan for {day}.
+Adjust the calorie range and macronutrient distribution according to the user's weight, height, age, and fitness goal (lose weight or gain muscle).
 
-        Ensure that:
-        - The combinations are varied and nutritionally balanced.
-        - One recipe should only appear once in the plan.
-        - The recipe must be distinct from the previous day's plan.
-        - The instructions are simple enough for a home cook.
-        - The format strictly adheres to JSON, without any code fences, explanations, or additional text.
+Get the user's weight (kg), height (cm), age (years), gender, diet preference, and health conditions based on {columns} and {rows}.
 
-        Example Output:
-        {{
-          "Morning": [
-            "Salmon Scramble: Pan-fry diced salmon with eggs, season with salt and pepper.",
-            "Quinoa Porridge: Cook quinoa in water, top with almonds and a drizzle of honey."
-          ],
-          "Noon": [
-            "Grilled Chicken Salad: Mix grilled chicken slices with fresh greens, drizzle with olive oil.",
-            "Brown Rice with Steamed Vegetables: Steam broccoli and carrots, serve with cooked brown rice."
-          ],
-          "Evening": [
-            "Baked Salmon: Season salmon with olive oil, bake at 375°F for 15 minutes.",
-            "Quinoa-Stuffed Bell Peppers: Fill bell peppers with cooked quinoa and bake."
-          ]
-        }}
+**Calculate the user's Basal Metabolic Rate (BMR) using the Mifflin-St Jeor equation:**
+- For men: **BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(years) + 5**
+- For women: **BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(years) - 161**
 
-        Using the provided daily food choices below, generate the JSON output for {day}:
+**Then calculate the Total Daily Energy Expenditure (TDEE) by multiplying the BMR with an activity factor of 1.55 (moderate exercise).**
 
-        {json.dumps(diet_data, indent=2)}
-        """
+For weight loss:
+- **Total daily calories**: TDEE minus 500 calories.
+- **Macronutrient distribution**: Total Fat: 20-30% of total calories; Protein: 30-40%; Carbohydrates: 30-50%.
+
+For muscle gain:
+- **Total daily calories**: TDEE plus 300-500 calories.
+- **Macronutrient distribution**: Total Fat: 20-30%; Protein: 35-45%; Carbohydrates: 40-50%.
+
+**Ensure that the total calories for all meals combined reach the calculated total daily calories. Adjust portion sizes and meal components as needed to meet this goal.**
+
+Each day's diet should be different to provide variety.
+
+Each meal must include:
+- A combination of items.
+- Each food combination must be provided in the strict format: "Name: Cooking instructions".
+- Replace "Name" with the actual food name or combination (e.g., "Salmon Salad").
+- "Cooking instructions" should describe the steps to prepare the meal, including the cooking method, key ingredients with their grams, and any important preparation details.
+- Calculate the total amount of Calories for that meal in the format "Nutrition: Total Calories: X cal, Total Fat: Xg, Protein: Xg, Carbohydrate: Xg." 
+
+Ensure that:
+- The combinations are varied and nutritionally balanced.
+- One recipe should only appear once in the plan.
+- The recipes must be randomly selected.
+- The instructions are simple enough for a home cook.
+- The format strictly adheres to JSON, without any code fences, explanations, or additional text.
+- The diet restrictions in columns and rows must be obeyed (e.g., if the user is vegetarian, no meat should be included).
+
+**At the end of the plan, provide a summary:**
+- "Total Daily Calories: X cal"
+- "Macronutrient Breakdown: Fat: X%, Protein: Y%, Carbohydrates: Z%"
+
+Example Output:
+{{
+  "Morning": [
+    "Salmon Scramble: Pan-fry diced salmon with eggs, season with salt and pepper.",
+    "Quinoa Porridge: Cook quinoa in water, top with almonds and a drizzle of honey.",
+    "Materials: salmon 100g, eggs 2, quinoa 50g, almonds 10g, honey 10g, salt 1g, pepper 1g.",
+    "Nutrition: Total Calories: 619 cal, Total Fat: 20g, Protein: 30g, Carbohydrate: 40g."
+  ],
+  "Noon": [
+    "Grilled Chicken Salad: Mix grilled chicken slices with fresh greens, drizzle with olive oil.",
+    "Brown Rice with Steamed Vegetables: Steam broccoli and carrots, serve with cooked brown rice.",
+    "Materials: chicken 100g, greens 50g, olive oil 10g, rice 50g, broccoli 50g, carrots 50g, salt 1g, pepper 1g.",
+    "Nutrition: Total Calories: 357 cal, Total Fat: 15g, Protein: 35g, Carbohydrate: 45g."
+  ],
+  "Evening": [
+    "Baked Salmon: Season salmon with olive oil, bake at 375°F for 15 minutes.",
+    "Quinoa-Stuffed Bell Peppers: Fill bell peppers with cooked quinoa and bake.",
+    "Materials: salmon 100g, olive oil 10g, quinoa 50g, bell peppers 100g, salt 1g, pepper 1g.",
+    "Nutrition: Total Calories: 619 cal, Total Fat: 25g, Protein: 25g, Carbohydrate: 35g."
+  ],
+  "Summary": [
+    "Total Daily Calories: 2595 cal",
+    "Macronutrient Breakdown: Fat: 25%, Protein: 35%, Carbohydrates: 40%"
+  ]
+}}
+
+Using the provided daily food choices below, generate the JSON output for {day}:
+
+{json.dumps(diet_data, indent=2)}
+    """
     response = client.chat.completions.create(
         model = "gpt-4o-mini",
-        max_tokens = 1000,
+        max_tokens = 1500,
         temperature = 0.7,
         messages = [
             {"role": "system", "content": "You are an assistant that generates daily diet plans."},
@@ -58,58 +112,98 @@ def generate_diet_plan(day, diet_data):
                 
     response_content = response.choices[0].message.content.strip()
     diet_plan = parse_json(response_content)
-
+    print(diet_plan)
     return diet_plan
-        
-        
-def generate_fitness_plan(day, fitness_data):
-    prompt = f"""
-    You are a fitness trainer AI. Create a fitness plan for {day} with the following requirements:
 
-    1. Each day has:
-    - Morning: 2 exercises.
-    - Evening: 2 exercises.
 
-    2. One weak has two rest days with no exercises (Thursday and Sunday).
+def generate_fitness_plan(day, fitness_data, day_index):
+    # day_index starts from 1 (Tuesday)
+    focus_areas = ["Chest and Arms", "Back and Shoulders", "Legs and Core"]
+    if (day_index % 4) == 0:
+        focus_area = None  # Rest day
+    else:
+        focus_area = focus_areas[(day_index - 1) % 3]
 
-    3. The Duration should add second after the number (e.g., "Duration: 10 seconds").
+    if focus_area is None:
+        fitness_plan = {"Evening": None}
+    else:
+        prompt = f"""
+You are a professional fitness trainer AI. Create a detailed and structured fitness plan for {day} based on the requirements and fitness data below. Ensure the plan is comprehensive, meets all criteria, and adheres to the rules provided.
 
-    4. Example Output:
-    {{
-        
-        "Morning": ["Dumbbell Spell Caster, Repetition: X, Duration: Y", "Cable Russian, Repetition: X, Duration: Y"],
-        "Evening": ["Cable Reverse: Repetition: X, Duration: Y", "30-Minute Run, Repetition: X, Duration: Y"]
+**Requirements and Rules:**
 
-    }}
+1. **Workout Structure**:
+   - Each active day must include **4 to 6 exercises**.
+   - Workouts are planned for one session only (either Morning or Evening).
+   - Each exercise must specify:
+     - "Exercise", "Repetition", "Sets", "Time (minutes)", and "Calorie Consumption (cal)".
+     - Calculate Time (minutes) as `sets * time per set` (from {fitness_data}).
+     - Calculate calorie consumption as `sets * calorie consumption per set` (from {fitness_data}).
+   - Total workout time should be **60 to 90 minutes**.
+   - Total calorie consumption for the session should be **300 to 600 calories**, depending on intensity.
 
-    Example Data:
-    {json.dumps(fitness_data, indent=2)}
+2. **Workout Focus**:
+   - The workout must target the specific focus area for the day:
+     - **{focus_area}**
+   - Include a balance of:
+     - **Strength training (priority for compound lifts and large muscle groups).**
+     - **Cardio (low-to-moderate intensity, time-efficient options).**
+     - **Flexibility or core-focused exercises.**
 
-    Rules:
-    - Use the example above, and follow the same format.
-    - No explanations, extra text, or code fences.
-    - Ensure variety, balance, and intensity.
+3. **Rest Days**:
+   - Rest days must occur after every three active days.
+   - Rest days involve no exercises.
+   - On rest days, output should be a list with None.
 
-    Output only as a JSON object.
-    """
-    response = client.chat.completions.create(
-        model = "gpt-4o-mini",
-        max_tokens = 1000,
-        temperature = 0.7,
-        messages = [
-            {"role": "system", "content": "You are an assistant that generates weekly fitness plans."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    #print("RAW RESPONSE:", response)
-      
-    response_content = response.choices[0].message.content.strip()
-    exercise_plan = parse_json(response_content)
+4. **Weekly Plan**:
+   - Ensure a balanced rotation of focus areas throughout the week.
+   - A week must include exactly **two rest days**.
 
-    return exercise_plan
-        
-        
-def adjust_daily_progress(day, previous_day, calories_week, diet_plan, fitness_plan):
+**Output Format**:
+- Provide the output in JSON format only.
+- Include a breakdown of exercises and totals for time and calorie consumption.
+- Example Output:
+{{
+    "Evening": [
+        {{
+            "Exercise": "Barbell Squats",
+            "Repetition": 10,
+            "Sets": 4,
+            "Time (minutes)": 20,
+            "Calorie Consumption (cal)": 120
+        }},
+        {{
+            "Exercise": "Pull-Ups",
+            "Repetition": 8,
+            "Sets": 3,
+            "Time (minutes)": 10,
+            "Calorie Consumption (cal)": 60
+        }}
+    ],
+    "Total Time": "70 minutes",
+    "Total Calorie Consumption": "300 cal"
+}}
+
+**Fitness Data Reference**:
+{json.dumps(fitness_data, indent=2)}
+
+Generate a fitness plan for {day} strictly in JSON format only.
+        """
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            max_tokens=1000,
+            temperature=0.7,
+            messages=[
+                {"role": "system", "content": "You are an assistant that generates weekly fitness plans."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+          
+        response_content = response.choices[0].message.content.strip()
+        fitness_plan = parse_json(response_content)
+    return fitness_plan
+
+def adjust_daily_progress(day, previous_day, calories_week, diet_plan, fitness_plan, columns, rows):
     """
     Analyzes whether the daily exercise is sufficient based on consumption and intake.
     Adjusts the exercise plan.
@@ -121,61 +215,57 @@ def adjust_daily_progress(day, previous_day, calories_week, diet_plan, fitness_p
     burned_calories = calories_week[previous_day]["calories burned (exercise)"]
 
     prompt = f"""
-    You are a fitness and nutrition expert AI.
+You are a fitness and nutrition expert AI.
 
-    The user has consumed {consumption_calories} calories on {previous_day} and has burned {burned_calories} calories through exercise.
+The user has consumed {consumption_calories} calories on {previous_day} and has burned {burned_calories} calories through exercise. 
 
-    Based on the user's goal to maintain a healthy lifestyle, adjust the curent exercise plan and diet plan.
+The user's fitness goal, height, weight, age, diet preference, and health conditions can be obtained based on {columns} and {rows}.
 
-    One weak has two rest days with no exercises (Thursday and Sunday). 
+The user's weekly routine includes:
+    - Rest days must occur after every three active days (e.g., if it starts from Tuesday, then Friday is a rest day).
+    - Rest days involve no exercises.
+    - Strength training and cardio on active days.
 
-    If you decide that the previous day's Calorie consumption is not up to standard, you can add additional cardio (such as run, swim and soon) to the today's exercise plan to burn more calories, and reduce the intake of up to 200 calories in the diet plan.
+The weekly calorie tracking data for {calories_week} includes:
+    - Daily calorie intake and exercise calories burned.
 
-    If you decide that the previous day's Calorie consumption is too high, you can add more strength training exercises to the today's exercise plan to build muscle and increase metabolism, and increase the intake of up to 200 calories in the diet plan.
+Based on this data:
 
-    If you decide that the previous day's Calorie consumption is just right, adjusted exercise plan and diet plan can keep the exercise and diet plan as current exercise plan and diet plan.
+- If the previous day's calorie consumption exceeds the goal (i.e., consumed more calories than planned), add cardio exercises to today's plan to burn more calories and reduce today's diet calorie intake by up to 200 calories.
+- If the previous day's calorie consumption is insufficient (i.e., consumed fewer calories than planned), add strength training exercises to today's plan to increase metabolism and allow for a calorie increase of up to 200 calories in the diet plan.
+- If the previous day's calorie consumption aligns with the goal, keep the exercise and diet plans as they are.
 
+Here is today's current exercise plan and diet plan:
+Current Exercise Plan for {day}:
+{json.dumps(fitness_plan, indent=2)}
 
-    Current Exercise Plan for {day}:
-    {json.dumps(fitness_plan, indent=2)}
+Current Diet Plan for {day}:
+{json.dumps(diet_plan, indent=2)}
 
-    Current Diet Plan for {day}:
-    {json.dumps(diet_plan, indent=2)}
+Adjust the plans based on the above rules and format your response strictly as follows:
 
-    Output the adjusted exercise plan and diet plan in JSON format, following the same structure as the current plans, in the following format:
-    
-    The output should be in the following format:
-    {{
-        "exercise_plan":{{
-        "Morning": ["Dumbbell Spell Caster, Repetition: X, Duration: Y", "Cable Russian, Repetition: X, Duration: Y"],
-        "Evening": ["Cable Reverse, Repetition: X, Duration: Y", "30-Minute Run, Repetition: X, Duration: Y"]
-        }},
-        "diet_plan":{{
-          "Morning": [
-            "Salmon Scramble: Pan-fry diced salmon with eggs, season with salt and pepper. Calories: X.",
-            "Quinoa Porridge: Cook quinoa in water, top with almonds and a drizzle of honey. Calories: Y."
-          ],
-          "Noon": [
-            "Grilled Chicken Salad: Mix grilled chicken slices with fresh greens, drizzle with olive oil. Calories: X.",
-            "Brown Rice with Steamed Vegetables: Steam broccoli and carrots, serve with cooked brown rice. Calories: Y."
-          ],
-          "Evening": [
-            "Baked Salmon: Season salmon with olive oil, bake at 375°F for 15 minutes. Calories: X.",
-            "Quinoa-Stuffed Bell Peppers: Fill bell peppers with cooked quinoa and bake. Calories: Y."
-          ]
-        }}
+{{
+    "exercise_plan": {{
+        "Evening": [/* Adjusted exercises here */],
+        "Total Time": "X minutes",
+        "Total Calorie Consumption": "Y cal"
+    }},
+    "diet_plan": {{
+      "Morning": [/* Adjusted meals here */],
+      "Noon": [/* Adjusted meals here */],
+      "Evening": [/* Adjusted meals here */]
     }}
+}}
 
-    **Do not include any explanations, comments, or additional text. Your entire response should be the JSON object only.**
-
+**Do not include any explanations, comments, or additional text. Your entire response should be the JSON object only.**
     """
 
     response = client.chat.completions.create(
         model = "gpt-4o-mini",
         max_tokens = 1000,
-         temperature = 0.7,
+        temperature = 0.7,
         messages = [
-            {"role": "system", "content": "You are an assistant that adjusts daily exercise plans."},
+            {"role": "system", "content": "You are an assistant that adjusts daily exercise and diet plans."},
             {"role": "user", "content": prompt}
         ]
     )
@@ -197,55 +287,11 @@ def combine_plan(diet_plan, fitness_plan):
     return combined_plan
 
 def to_dataframe(plan, plan_type="Combined"):
-    """data = []
-    for day, activities in plan.items():
-        if plan_type == "Diet":
-            meals =[]
-            for meal in activities:
-                if isinstance(meal, dict):
-                    meal_name = meal.get("meal", "Meal")
-                    food = ", ".join(meal.get("foods", []))
-                    meals.append(f"{meal_name}: {food}")
-                else:
-                    meals.append(meal)
-            data.append({"Day": day, "Diet": ";".join(meals)})
-        elif plan_type == "Fitness":
-            exercises = activities
-            if isinstance(activities, list):
-                exercises_str = ";".join(activities)
-            else:
-                exercises_str = exercises
-            data.append({"Day": day, "Fitness": exercises_str})
-        else:
-            meals = []
-            for meal in activities["Diet"]:
-                if isinstance(meal, dict):
-                    meal_name = meal.get("meal", "Meal")
-                    food = ", ".join(meal.get("foods", []))
-                    meals.append(f"{meal_name}: {food}")
-                else:
-                    meals.append(meal)
-            diet_str = ";".join(meals)
-            
-            exercises = activities["Fitness"]
-            if isinstance(exercises, list):
-                exercises_str = ";".join(exercises)
-            else:
-                exercises_str = exercises
-                
-            data.append({
-                "Day": day, 
-                "Diet": diet_str, 
-                "Fitness": exercises_str
-                })  """
-                
-                
     data = []
     for day, activities in plan.items():
         if plan_type == "Diet":
-            if isinstance(activities, list):
-                meals = ";".join(activities)
-                data.append({"Day": day, "Diet": meals})
+            if activities is None or not activities:
+                data.append({"Day": day, "Diet": None})
             else:
                 data.append({
                     "Day": day, 
@@ -254,26 +300,24 @@ def to_dataframe(plan, plan_type="Combined"):
                     "Evening": activities.get("Evening", "")
                     })
         elif plan_type == "Fitness":
-            if isinstance(activities, list):
-                exercises = ";".join(activities)
-                data.append({"Day": day, "Fitness": exercises})
+            if activities is None or not activities:
+                data.append({"Day": day, "Fitness": None})
             else:
                 data.append({
                     "Day": day,
-                    "Morning": activities.get("Morning", ""),
                     "Evening": activities.get("Evening", "")
                     })
         else:
             meals = activities.get("Diet", {})
             exercises = activities.get("Fitness", {})
-            if isinstance(meals, list):
-                diet_str = ";".join(meals)
+            if meals is None or not meals:
+                diet_str = None
             else:
                 diet_str = f"Morning: {meals.get('Morning', '')}, Noon: {meals.get('Noon', '')}, Evening: {meals.get('Evening', '')}"
-            if isinstance(exercises, list):
-                exercises_str = ";".join(exercises)
+            if exercises is None or not exercises:
+                exercises_str = None
             else:
-                exercises_str = f"Morning: {exercises.get('Morning', '')}, Evening: {exercises.get('Evening', '')}"
+                exercises_str = f"Evening: {exercises.get('Evening', '')}"
             data.append({
                 "Day": day,
                 "Diet": diet_str,
@@ -287,4 +331,11 @@ def parse_json(json_str):
         json_str = json_str[7:]
     if json_str.endswith("```"):
         json_str = json_str[:-3]
-    return json.loads(json_str.strip())
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        print("JSONDecodeError:", e)
+        print("Invalid JSON string:", json_str)
+        return None
+
+

@@ -5,7 +5,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from TrainningRec import Training_recommendation
 from Dietary_recommendation import Dietary_recommendation
-from Recommendation_syn import generate_diet_plan, generate_fitness_plan, combine_plan, adjust_daily_progress, to_dataframe
+from Recommendation_syn import fetch_user_data, generate_diet_plan, generate_fitness_plan, combine_plan, adjust_daily_progress, to_dataframe
 import json
 import pandas as pd
 from openai import OpenAI
@@ -33,12 +33,12 @@ combined_plan = {}
 # Define the calories_week data
 calories_week = {
     "Monday": {"Calorie intake": 2500, "calories burned (exercise)": 0},
-    "Tuesday": {"Calorie intake": 1800, "calories burned (exercise)": 1200},
-    "Wednesday": {"Calorie intake": 2300, "calories burned (exercise)": 1300},
-    "Thursday": {"Calorie intake": 2100, "calories burned (exercise)": 0},
-    "Friday": {"Calorie intake": 1700, "calories burned (exercise)": 1100},
-    "Saturday": {"Calorie intake": 1800, "calories burned (exercise)": 1200},
-    "Sunday": {"Calorie intake": 2700, "calories burned (exercise)": 0},
+    "Tuesday": {"Calorie intake": 2200, "calories burned (exercise)": 600},
+    "Wednesday": {"Calorie intake": 2300, "calories burned (exercise)": 0},
+    "Thursday": {"Calorie intake": 2300, "calories burned (exercise)": 500},
+    "Friday": {"Calorie intake": 3000, "calories burned (exercise)": 0},
+    "Saturday": {"Calorie intake": 2200, "calories burned (exercise)": 400},
+    "Sunday": {"Calorie intake": 2700, "calories burned (exercise)": 500},
 }
 
 # List of days from today (Tuesday) until next Monday
@@ -440,9 +440,21 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
             if fitness_plan and day in fitness_plan and time_of_day in fitness_plan[day]:
                 exercise_items = fitness_plan[day][time_of_day]
                 for item in exercise_items:
-                    name, *details = item.split(", ")
-                    details_text = "\n".join(details)
-                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                    if isinstance(item, dict):
+                        # Extract details from dictionary
+                        name = item.get("Exercise", "Unknown")
+                        details = [
+                            f"{key}: {value}"
+                            for key, value in item.items()
+                            if key != "Exercise"
+                        ]
+                        details_text = "\n".join(details)
+                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                    else:
+                        # Fallback for string-based exercises
+                        name, *details = item.split(", ")
+                        details_text = "\n".join(details)
+                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
                 table[day]["Noon"] += "No exercise, take a break!\n"
                     
             if combined_timetable and day in combined_timetable and time_of_day in combined_timetable[day]:
@@ -454,12 +466,25 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
                     details_text = ": ".join(details) if details else ""
                     table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
                 for item in exercise_items:
-                    name, *details = item.split(", ")
-                    details_text = "\n".join(details)
-                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
-                #table[day]["Noon"] += "No exercise, take a break!\n"
+                    if isinstance(item, dict):
+                        # Extract details from dictionary
+                        name = item.get("Exercise", "Unknown")
+                        details = [
+                            f"{key}: {value}"
+                            for key, value in item.items()
+                            if key != "Exercise"
+                        ]
+                        details_text = "\n".join(details)
+                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                    else:
+                        # Fallback for string-based exercises
+                        name, *details = item.split(", ")
+                        details_text = "\n".join(details)
+                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                # table[day]["Noon"] += "No exercise, take a break!\n"
   
     return table
+
            
 
 def show_diet_plan():
@@ -541,14 +566,33 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
     global diet_plan, fitness_plan, combined_plan
 
     # Plan adjustment based on previous day
-    diet_plan_raw = generate_diet_plan(day, dietary_rec)
-    fitness_plan_raw = generate_fitness_plan(day, training_rec)
+    user_id = 8
+    columns, rows = fetch_user_data(user_id)
+    print(rows)
+    diet_plan_raw = generate_diet_plan(day, dietary_rec, columns, rows)
+    
+    # Determine day_index based on the day
+    day_indices = {
+        "Monday": 0,
+        "Tuesday": 1,
+        "Wednesday": 2,
+        "Thursday": 3,
+        "Friday": 4,
+        "Saturday": 5,
+        "Sunday": 6
+    }
+    day_index = day_indices.get(day, 0)  # Default to 0 if day is not found
+
+    fitness_plan_raw = generate_fitness_plan(day, training_rec, day_index)
+    
     adjusted_exercise_plan, adjusted_diet_plan = adjust_daily_progress(
         day,
         previous_day,
         calories_week,
         diet_plan_raw,
         fitness_plan_raw,
+        columns,
+        rows
     )
 
     # Update the global plans with adjusted plans for the day
@@ -563,6 +607,7 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
     chat_display.insert(tk.END, f"Fitness Plan for {day} is complete. \n")
     chat_display.see(tk.END)
     chat_display.config(state="disabled")
+
 
 # Send button
 send_button = tk.Button(chat_frame, text="Send", font=("Helvetica", 12), bg="#6ba96b", fg="white", command=lambda: process_chat())
