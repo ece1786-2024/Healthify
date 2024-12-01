@@ -32,13 +32,13 @@ combined_plan = {}
 
 # Define the calories_week data
 calories_week = {
-    "Monday": {"Calorie intake": 2500, "calories burned (exercise)": 0},
-    "Tuesday": {"Calorie intake": 2200, "calories burned (exercise)": 600},
-    "Wednesday": {"Calorie intake": 2300, "calories burned (exercise)": 0},
-    "Thursday": {"Calorie intake": 2300, "calories burned (exercise)": 500},
-    "Friday": {"Calorie intake": 3000, "calories burned (exercise)": 0},
+    "Monday": {"Calorie intake": 2500, "calories burned (exercise)": 0}, # the day before first day
+    "Tuesday": {"Calorie intake": 2200, "calories burned (exercise)": 420},
+    "Wednesday": {"Calorie intake": 2300, "calories burned (exercise)": 0}, # lazy, not exercise
+    "Thursday": {"Calorie intake": 2300, "calories burned (exercise)": 430},
+    "Friday": {"Calorie intake": 3000, "calories burned (exercise)": 0},    # the rest day
     "Saturday": {"Calorie intake": 2200, "calories burned (exercise)": 400},
-    "Sunday": {"Calorie intake": 2700, "calories burned (exercise)": 500},
+    "Sunday": {"Calorie intake": 2700, "calories burned (exercise)": 480},  # eat too much
 }
 
 # List of days from today (Tuesday) until next Monday
@@ -430,60 +430,93 @@ def prepare_table_data(diet_plan=None, fitness_plan=None, combined_timetable=Non
         for time_of_day in ["Morning", "Noon", "Evening"]:
             table[day][time_of_day] = ""
             
+            # Process diet plan
             if diet_plan and day in diet_plan and time_of_day in diet_plan[day]:
                 diet_items = diet_plan[day][time_of_day]
-                for item in diet_items:
-                    name, *details = item.split(":")
-                    details_text = ":".join(details)
-                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
-            
+                if diet_items:
+                    if isinstance(diet_items, str):
+                        # diet_items is a string
+                        table[day][time_of_day] += diet_items + "\n"
+                    elif isinstance(diet_items, list):
+                        # diet_items is a list
+                        for item in diet_items:
+                            name, *details = item.split(":")
+                            details_text = ":".join(details).strip()
+                            table[day][time_of_day] += f"**{name.strip()}**\n{details_text}\n\n"
+                    else:
+                        # diet_items is of an unexpected type
+                        pass
+
+            # Process fitness plan
             if fitness_plan and day in fitness_plan and time_of_day in fitness_plan[day]:
                 exercise_items = fitness_plan[day][time_of_day]
-                for item in exercise_items:
-                    if isinstance(item, dict):
-                        # Extract details from dictionary
-                        name = item.get("Exercise", "Unknown")
-                        details = [
-                            f"{key}: {value}"
-                            for key, value in item.items()
-                            if key != "Exercise"
-                        ]
-                        details_text = "\n".join(details)
-                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                if exercise_items:
+                    if isinstance(exercise_items, str):
+                        # exercise_items is a string (e.g., "Relax day")
+                        table[day][time_of_day] += exercise_items + "\n"
+                    elif isinstance(exercise_items, list):
+                        # exercise_items is a list
+                        for item in exercise_items:
+                            if isinstance(item, dict):
+                                # Extract details from dictionary
+                                name = item.get("Exercise", "Unknown")
+                                details = [
+                                    f"{key}: {value}"
+                                    for key, value in item.items()
+                                    if key != "Exercise"
+                                ]
+                                details_text = "\n".join(details)
+                                table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                            else:
+                                # Fallback for string-based exercises
+                                name, *details = item.split(", ")
+                                details_text = "\n".join(details)
+                                table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
                     else:
-                        # Fallback for string-based exercises
-                        name, *details = item.split(", ")
-                        details_text = "\n".join(details)
-                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
-                table[day]["Noon"] += "No exercise, take a break!\n"
-                    
+                        # exercise_items is of an unexpected type
+                        pass
+
+            # Process combined timetable
             if combined_timetable and day in combined_timetable and time_of_day in combined_timetable[day]:
                 combined_items = combined_timetable[day][time_of_day]
-                diet_items = combined_items.get("Diet", [])
-                exercise_items = combined_items.get("Fitness", [])
-                for item in diet_items:
-                    name, *details = item.split(":")
-                    details_text = ": ".join(details) if details else ""
-                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
-                for item in exercise_items:
-                    if isinstance(item, dict):
-                        # Extract details from dictionary
-                        name = item.get("Exercise", "Unknown")
-                        details = [
-                            f"{key}: {value}"
-                            for key, value in item.items()
-                            if key != "Exercise"
-                        ]
-                        details_text = "\n".join(details)
-                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
-                    else:
-                        # Fallback for string-based exercises
-                        name, *details = item.split(", ")
-                        details_text = "\n".join(details)
-                        table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
-                # table[day]["Noon"] += "No exercise, take a break!\n"
-  
+                if combined_items:
+                    # Process diet items
+                    diet_items = combined_items.get("Diet", [])
+                    if diet_items:
+                        if isinstance(diet_items, str):
+                            table[day][time_of_day] += diet_items + "\n"
+                        elif isinstance(diet_items, list):
+                            for item in diet_items:
+                                name, *details = item.split(":")
+                                details_text = ": ".join(details).strip() if details else ""
+                                table[day][time_of_day] += f"**{name.strip()}**\n{details_text}\n\n"
+                        else:
+                            pass  # Unexpected type
+
+                    # Process fitness items
+                    exercise_items = combined_items.get("Fitness", [])
+                    if exercise_items:
+                        if isinstance(exercise_items, str):
+                            table[day][time_of_day] += exercise_items + "\n"
+                        elif isinstance(exercise_items, list):
+                            for item in exercise_items:
+                                if isinstance(item, dict):
+                                    name = item.get("Exercise", "Unknown")
+                                    details = [
+                                        f"{key}: {value}"
+                                        for key, value in item.items()
+                                        if key != "Exercise"
+                                    ]
+                                    details_text = "\n".join(details)
+                                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                                else:
+                                    name, *details = item.split(", ")
+                                    details_text = "\n".join(details)
+                                    table[day][time_of_day] += f"**{name}**\n{details_text}\n\n"
+                        else:
+                            pass  # Unexpected type
     return table
+
 
            
 
@@ -583,7 +616,7 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
     }
     day_index = day_indices.get(day, 0)  # Default to 0 if day is not found
 
-    fitness_plan_raw = generate_fitness_plan(day, training_rec, day_index)
+    fitness_plan_raw = generate_fitness_plan(day, training_rec, day_index, columns, rows, diet_plan_raw)
     
     adjusted_exercise_plan, adjusted_diet_plan = adjust_daily_progress(
         day,
@@ -592,7 +625,9 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
         diet_plan_raw,
         fitness_plan_raw,
         columns,
-        rows
+        rows,
+        dietary_rec,
+        training_rec
     )
 
     # Update the global plans with adjusted plans for the day

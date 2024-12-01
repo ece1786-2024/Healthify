@@ -108,7 +108,7 @@ Recommend a list of food items suitable for the user using the loaded food datas
 
 Ensure that the recommendations comply with the user's dietary restrictions. Exclude any foods that violate these restrictions. The recommended foods should be common and accessible.
 
-The output should have at least 20 foods.
+The output should have at least 30 foods.
 
 The output should be in JSON format with the following structure:
 
