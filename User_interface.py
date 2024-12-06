@@ -363,8 +363,23 @@ def show_plan(table_data, title):
     # Header row: Morning, Noon, Evening
     header_frame = tk.Frame(frame, bg="#6ba96b")
     header_frame.grid(row=0, column=0, columnspan=4, sticky="nsew")
-    empty_label = tk.Label(header_frame, text="", bg="#6ba96b")
+    
+    
+    empty_label = tk.Label(
+    header_frame,
+    text="",  # Empty for alignment
+    font=("Arial", 18, "bold"),
+    bg="#6ba96b",
+    fg="white",
+    relief="solid",
+    borderwidth=1,
+    width=10,
+    )
     empty_label.grid(row=0, column=0, sticky="nsew")
+    
+    # Column headers
+    frame.grid_columnconfigure(0, weight=0)  # First column has fixed width
+    header_frame.grid_columnconfigure(0, weight=0)  # First column of the header has fixed width
     
     
     for i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
@@ -391,7 +406,8 @@ def show_plan(table_data, title):
             fg="white",
             anchor="center",
             relief="solid",
-            borderwidth=1)   
+            borderwidth=1,
+            width=10)   
         day_label.grid(row=row_i+1, column=0, sticky="nsew")
         
         for col_i, time_of_day in enumerate(["Morning", "Noon", "Evening"]):
@@ -413,7 +429,7 @@ def show_plan(table_data, title):
     
     total_columns = 4
     total_rows = len(table_data) + 1
-    for i in range(total_columns):
+    for i in range(1,total_columns):
         frame.grid_columnconfigure(i, weight=3, uniform="columns")
         header_frame.grid_columnconfigure(i, weight=3, uniform="columns")
     for i in range(total_rows):
