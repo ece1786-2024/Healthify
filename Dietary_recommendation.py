@@ -94,42 +94,45 @@ User Input: {user_input}
 Loaded Dataset:
 {food_text}
 
-Using the loaded dataset and the user input, recommend a diverse and balanced set of food items for the user. For each food item, provide the calories and nutritional values per gram. Do not limit or specify the weight of each food item.
+Using the loaded dataset and the user input, recommend a diverse and balanced set of food items for the user.  For each food item, provide the calories and nutritional values per gram.  Do not limit or specify the weight of each food item.
 
-The user's profile includes age, gender, weight, fitness goal, dietary restrictions, and eating preferences. Use the user's age, gender, and weight to estimate their Body Mass Index (BMI) and Total Daily Energy Expenditure (TDEE). After calculating the BMI and TDEE, combine this information with the user's eating preferences to calculate their daily calorie needs.
+The user's profile includes age, gender, weight, fitness goal, dietary restrictions, and eating preferences. Use the user's age, gender, fitness goal, dietary preferences, and weight to provide the recommendations of food. Ensure the recommendations comply with the user's dietary restrictions and preferences. Exclude any foods that violate these restrictions. 
 
-Recommend a list of food items suitable for the user using the loaded food dataset. Each item should include:
-
+Recommend exactly 100 food items suitable for the user using the loaded food dataset. For each food item, provide the following details:
 - Food Name
 - Calories per gram
 - Total Fat per gram
 - Protein per gram
 - Carbohydrate per gram
 
-Ensure that the recommendations comply with the user's dietary restrictions. Exclude any foods that violate these restrictions. The recommended foods should be common and accessible.
+Ensure that the recommendations comply with the user's dietary restrictions.  Exclude any foods that violate these restrictions.  The recommended foods should be common and accessible.
 
-The output should have at least 30 foods.
-
-The output should be in JSON format with the following structure:
-
+Structure the output in JSON format with the following structure:
 {{
   "Name": "User's Name",
-  "BMI": calculated_value,
-  "TDEE": calculated_value,
   "Recommended Foods": [
     {{
-      "Food": "Food Name",
-      "Calories per gram": X,
-      "Total Fat per gram": X,
-      "Protein per gram": X,
-      "Carbohydrate per gram": X
-    }},
-    ...
+      "Food Choices_1": {{
+        "Food Name": "Food Name",
+        "Calories per gram": X,
+        "Total Fat per gram": X,
+        "Protein per gram": X,
+        "Carbohydrate per gram": X
+      }},
+      ...
+      "Food Choices_100": {{
+        "Food Name": "Food Name",
+        "Calories per gram": X,
+        "Total Fat per gram": X,
+        "Protein per gram": X,
+        "Carbohydrate per gram": X
+      }}
+    }}
   ]
 }}
 
-Only include the calculated BMI and TDEE numbers; do not show the calculation steps. Do not include any explanations or markdown formatting in your output.
-        """
+The output must include exactly 100 recommendations. Do not include any explanations or calculations in the response. Only provide the JSON output as described.
+    """
         response = client.chat.completions.create(
             model = "gpt-4o",
             max_tokens = 1500,

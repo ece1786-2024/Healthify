@@ -72,7 +72,7 @@ def Training_recommendation(user_inputs):
     Available Exercises:
     {exercise_text}
 
-    Now, based on the above information, provide 30 personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5. 
+    Now, based on the above information, provide 100 personalized training recommendations for the user. The output should be a JSON format sequences with keys: Exercise Choices_1, Exercise Choices_2, Exercise Choices_3, Exercise Choices_4, Exercise Choices_5 and keep until Exercise chocies_100. 
     For each exercise, give a brief description for how to do it. Just json, also with "Reps", "Duration","Rest", "Calories consumption". no others things like tip or else.
     For "Reps", extract the repetitions from the column "Repetitions" from the dataset, and output the number of repetitions by dividing the repetitions by the number of sets. 
     For "Duration", output the duration from the column "Duration (seconds)" from the dataset.

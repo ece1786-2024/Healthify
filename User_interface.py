@@ -38,7 +38,7 @@ calories_week = {
     "Thursday": {"Calorie intake": 2300, "calories burned (exercise)": 430},
     "Friday": {"Calorie intake": 2400, "calories burned (exercise)": 0},    # the rest day
     "Saturday": {"Calorie intake": 2600, "calories burned (exercise)": 400},
-    "Sunday": {"Calorie intake": 2500, "calories burned (exercise)": 350},  # eat too much
+    "Sunday": {"Calorie intake": 2500, "calories burned (exercise)": 350},  
 }
 
 # List of days from today (Tuesday) until next Monday
@@ -599,7 +599,7 @@ def process_recommendations(training_rec, dietary_rec, day=None, previous_day=No
     global diet_plan, fitness_plan, combined_plan
 
     # Plan adjustment based on previous day
-    user_id = 8
+    user_id = 43
     columns, rows = fetch_user_data(user_id)
     print(rows)
     diet_plan_raw = generate_diet_plan(day, dietary_rec, columns, rows)

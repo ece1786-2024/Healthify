@@ -27,17 +27,25 @@ client = OpenAI(
 )
 
 def generate_diet_plan(day, diet_data, columns, rows):
+    gender = rows[0][columns.index('gender')]
+    age = int(rows[0][columns.index('age')])
+    weight = float(rows[0][columns.index('weight')])  # in kg
+    height = float(rows[0][columns.index('height')])  # in cm
+    fitness_goal = rows[0][columns.index('fitness_goal')]
+    health_conditions = rows[0][columns.index('health_restrictions')]
+    fitness_level = rows[0][columns.index('physical_activity_level')]
+
     prompt = f"""
 You are a diet planner AI. Using the following provided daily food choices, create a balanced diet plan for {day}.
 Adjust the calorie range and macronutrient distribution according to the user's weight, height, age, and fitness goal (lose weight or gain muscle).
 
-Get the user's weight (kg), height (cm), age (years), gender, diet preference, and health conditions based on {columns} and {rows}.
+Get the user's {weight} (kg), {height} (cm), {age} (years), {gender}, {fitness_goal}, {health_conditions} and {fitness_level } based on {columns} and {rows}.
 
 **Calculate the user's Basal Metabolic Rate (BMR) using the Mifflin-St Jeor equation:**
-- For men: **BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(years) + 5**
-- For women: **BMR = 10 * weight(kg) + 6.25 * height(cm) - 5 * age(years) - 161**
+- For men: **BMR = 10 * {weight}(kg) + 6.25 * {height}(cm) - 5 *  {age}(years) + 5**
+- For women: **BMR = 10 * {weight}(kg) + 6.25 * {height}(cm) - 5 *  {age}(years) - 161**
 
-**Then calculate the Total Daily Energy Expenditure (TDEE) by multiplying the BMR with an activity factor of 1.55 (moderate exercise).**
+**Then calculate the Total Daily Energy Expenditure (TDEE) by multiplying the BMR with an activity factor of 1.55 (moderate exercise, {fitness_level }).**
 
 For weight loss:
 - **Total daily calories**: TDEE minus 500 calories.
@@ -208,9 +216,10 @@ You are a professional fitness trainer AI. Create a detailed and structured fitn
     "Evening": [
 
     "Exercise 1": "Barbell Squats",
+    "Description": "Barbell Squats are a compound exercise that targets the quadriceps, hamstrings, and glutes. Stand with your feet shoulder-width apart, holding a barbell across your upper back. Keeping your chest up and core engaged, push your hips back and bend your knees to lower into a squat. Push through your heels to return to the starting position.",
     "Repetition": 10,
-    "Ses": 4,
-        "Time (minutes)": 20,
+    "Sets": 4,
+    "Time (minutes)": 20,
     "Calorie Consumption (cal)": 120
     ,
     
@@ -296,17 +305,24 @@ The weekly calorie tracking data is:
 **Requirements:**
 
 1. **Adjust the Fitness Plan**:
-
-   - **Increase the total exercise time and calorie consumption** to meet the minimum required:
-     - **Total Time (minutes)**: the sum of Total Time for each exercise at least **60 minutes** and no more than **120** minutes.
-     - **Total Calorie Consumption (cal)**: At least **400 calories**.
+     **Workout Structure**:
+   - the number of workout from 4 to 6. No less or more
+   - the number of sets at least 6, no more than 12.
+   - Workouts are planned for one session only (either Morning or Evening).
+   - Each exercise must specify:
+     - "Exercise", "Repetition", "Sets", "Time (minutes)", and "Calorie Consumption (cal)".
+     - Calculate Time (minutes) as **sets * duration per set (from {fitness_data} and transfer into minutes from second)**.
+     - Calculate Calorie Consumption as **sets * calorie consumption per set (from {fitness_data})**.
+    - give the description of the exercise based on the description in the fitness_data after the name of the workout.
+   - the sum of all exericses' Time (minutes) should be **60 to 120 minutes**.
+   - the sum of all exericses' Calorie Consumption (cal) for the session should be **400 to 600 calories**.
    - **Select additional exercises** that are suitable for the user's fitness level and health conditions.
-   - The sum of bmi and Total Calorie Consumption (cal) in fitness plan should larger than the total daily calories in diet plan.
+   - The sum of bmi and Total Calorie Consumption (cal) in fitness plan should larger (between 400 to 600 cal) than the total daily calories in diet plan.
    - Ensure that the **number of workouts is between 4 and 6**, and the **number of sets is at least 6 less than 12 (based on the total time not excced two hours)**.
 
 2. **Adjust the Diet Plan**:
 
-   - **Increase the total daily calorie intake** to meet the minimum required.
+   - **Increase the total daily calorie intake** to meet the required.
    - Adjust meals by adding nutrient-dense foods from the provided diet data.
    - Ensure that the **macronutrient distribution** remains balanced.
 
@@ -323,7 +339,7 @@ The weekly calorie tracking data is:
 **Output Format:**
 - ** if the list of exercises is empty or "Relax day", provide the output as "Evening": "Relax day". **
 - **Provide the adjusted plans in valid JSON format like Current Exercise Plan and Current Diet Plan**.
-- **Include all required fields** for each exercise and meal.
+- **Include all required fields (include the descroption from {fitness_data} after the name of the exercise)** for each exercise and meal.
 - **Do not include any explanations or additional text**.
 
 **Adjusted Exercise Plan for {day}:**
